@@ -1,0 +1,26 @@
+Package: rPupps
+Type: Package
+Title: Harp and hooded seal pup production estimation
+Version: 0.1.0
+Author: c(person("Tor Arne","Oigard",role=c("aut","cre"), email="tor.arne.oigard@gmail.com"),
+	    person("Martin","Biuw",role=c("aut","cre"),email = "martin.biuw@hi.no"))
+Maintainer: Martin Biuw <martin.biuw@hi.no>Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+Description: Pup production for harp and hooded seals.
+License: GPL-2
+Encoding: UTF-8
+LazyData: TRUE
+URL: https://github.com/NorskRegnesentral/rPupps
+RoxygenNote: 7.0.0
+Imports:
+  shapefiles, 
+  rgdal,
+  ggplot2,
+  mgcv
+LinkingTo: 
+  TMB, 
+  RcppEigen
+Suggests: 
+  knitr,
+  roxygen2,
+  rmarkdown
