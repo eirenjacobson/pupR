@@ -1,4 +1,4 @@
-Package: rPupps
+Package: pupR
 Type: Package
 Title: Harp and hooded seal pup production estimation
 Version: 0.1.0
@@ -10,7 +10,7 @@ Description: Pup production for harp and hooded seals.
 License: GPL-2
 Encoding: UTF-8
 LazyData: TRUE
-URL: https://github.com/NorskRegnesentral/rPupps
+URL: https://github.com/NorskRegnesentral/pupR
 RoxygenNote: 7.0.0
 Imports:
   shapefiles, 
