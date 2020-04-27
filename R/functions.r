@@ -1116,7 +1116,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   #Load C part---------------------
   tmbDir <- system.file("libs", package = "pupR")
   if(Sys.info()["sysname"] =="Windows")dyn.load(paste(tmbDir,"/x64/pupR",sep = ""))
-  if(Sys.info()["sysname"] =="Linux")dyn.load(paste(tmbDir,"/.so",sep = ""))
+  if(Sys.info()["sysname"] =="Linux")dyn.load(paste(tmbDir,"/pupR.so",sep = ""))
   #-----------------------------------
 
 
