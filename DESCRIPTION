@@ -12,6 +12,8 @@ LazyData: TRUE
 URL: https://github.com/NorskRegnesentral/pupR
 RoxygenNote: 7.0.0
 Imports:
+  TMB,
+  RcppEigen,
   shapefiles, 
   rgdal,
   ggplot2,
