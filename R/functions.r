@@ -1120,7 +1120,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   #-----------------------------------
 
 
-  obj <- MakeADFun(data,parameters,DLL="birthDist",checkParameterOrder = FALSE)
+  obj <- TMB::MakeADFun(data,parameters,DLL="birthDist",checkParameterOrder = FALSE)
 
   obj$fn()
   obj$gr()
