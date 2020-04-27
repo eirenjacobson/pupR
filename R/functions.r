@@ -1106,12 +1106,19 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   #############################
   # TMB part
   #############################
-  library(TMB)
+  #library(TMB)
 
-  compile("birthDist.cpp","-O1 -g",DLLFLAGS="")
-  dyn.load(dynlib("birthDist"))
+  #compile("birthDist.cpp","-O1 -g",DLLFLAGS="")
+  #dyn.load(dynlib("birthDist"))
 
   #load("birthidstData.RDat")
+
+  #Load C part---------------------
+  tmbDir <- system.file("libs", package = "pupR")
+  if(Sys.info()["sysname"] =="Windows")dyn.load(paste(tmbDir,"/x64/pupR",sep = ""))
+  if(Sys.info()["sysname"] =="Linux")dyn.load(paste(tmbDir,"/.so",sep = ""))
+  #-----------------------------------
+
 
   obj <- MakeADFun(data,parameters,DLL="birthDist",checkParameterOrder = FALSE)
 
