@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
+  
   fig.height = 5
 )
 ```
@@ -25,7 +26,7 @@ knitr::opts_chunk$set(
 library(pupR)
 ```
 # Overview
-The purpose of this vignette is to show how to use the `pupR` package for assessment of various harp and hooded seal populations. It will guide you through the model fitting, obtaining estimated quantities, finding and exploring, various catch options, how to structure the data set, and how to visualize the modelled population dynamics. In the appendix we provide a script for a complete analysis of the demo data, and we present the population dynamics model used.
+The purpose of this vignette is to show how to use the `pupR` package for estimating the pup abundance of harp and hooded seal populations based on aerial photos. It will guide you through how to prepare and read the data, and how to estimate the pup abundance. Also there is a function for finding a correction factor to correct the estimated abundance for pups which have not been born yet or pups that have left ice based on multiple staging data. A complete analysis of a survey caried out on harp and hooded seals in 2012 in the West Ice (along the coast of Greenland) is included to demonstrate the use of this package. In the appendix each method for estimating the abundance and the method for estimating the correction factor is described (maybe add this later if needed...could also just refer to published papers.)
 
 
 
@@ -40,14 +41,16 @@ The population dynamics model use historical catch records, fecundity rates, age
 
 
 ## Demo data
-When installing the `rSPAMM` package a demo data set is included so that how to use the package can be explored. The demo data is reproductive data, catch data, pup production estimates and priors used for population dynamics modelling of the harp seal population in the East Ice (White Sea).
+When installing the `pupR` package a demo data set is included so that one can explore how to use the package. 
+
+<!-- The demo data is reproductive data, catch data, pup production estimates and priors used for population dynamics modelling of the harp seal population in the East Ice (White Sea). -->
 
 To load the demo data:
 ```{r}
-data("harpeastDemo")
+data("harpwestDemo")
 ```
 
-The demo data is a list called `harpeast` containing two lists called `data` and `parameters`. The `data` list contains the data needed to fit the population dynamics model and the `parameters` list contains the parameters estimated by the model along with initial values of them.
+<!-- The demo data is a list called `harpeast` containing two lists called `data` and `parameters`. The `data` list contains the data needed to fit the population dynamics model and the `parameters` list contains the parameters estimated by the model along with initial values of them. -->
 
 ```{r}
 names(harpeast$data)
@@ -56,24 +59,83 @@ names(harpeast$parameters)
 ```
 
 # Full data set
-The latest version of the most recent data on the harps and hooded seal population in the West Ice and the harp seal population in the east ice has a separate GitHub repository called [HarpAndHoodedSealData](https://www.github.com/NorskRegnesentral/HarpAndHoodedSealData).
+The latest version of the most recent data on aerial photos of the harps and hooded seal population in the West Ice has a separate GitHub repository called [HarpAndHoodedAerialSealData](https://www.github.com/NorskRegnesentral/HarpAndHoodedAerialSealData).
 
-To download the complete data set run the following function:
-```{r eval=FALSE}
-downloadData()
+<!-- To download the complete data set run the following function: -->
+<!-- ```{r eval=FALSE} -->
+<!-- downloadData() -->
+<!-- ``` -->
+<!-- When you run this function you can run it as it is and you will be asked to specify a folder where the data is stored. You can even decide to create a new folder if needed. If you already have prepared a folder for where to download the data and has set working directory to this folder you should use the option `chooseFolder = FALSE`, i.e., -->
+<!-- ```{r eval=FALSE} -->
+<!-- downloadData(chooseFolder = FALSE) -->
+<!-- ``` -->
+<!-- After downloading the data repository you will have a **Data** folder and a **Scripts** folder. The **Data** folder contains the various harp and hooded seal data and the **Scripts** folder contains useful examples on how to perform a complete assessment. -->
+
+<!-- When analyzing these data the `rSPAMM` package assumes that you are in the root folder of the downloaded data, i.e., not in the **Data** or the **Scripts** folder. -->
+
+
+
+## Data
+All data that is described below will be loaded and used to estimate the pup abundance of the harp and hooded seals from aerial strip transect data. Having the data on a strip transect format is only required by one of the estimation methods. The others are more general and can deal with different sampling formats.
+
+The data set is divided in different parts. One part contains a file where the following information is needed in separate columns:
+
+- Reader ID
+- Photo ID
+- Which transect the photo is on (not required)
+- Latitude of photo
+- Longitude of photo
+- Altitude of the photo. Along with some known camera parameters this is used to find the size of the area covered by each photo.
+- Area covered by the photo (this is only added if the size of the area covered is known but not required. Using the altitude where the photo is taken from along with the parameters this is calculated)
+- Number of pups on a given photo. One separate column for each reader. Some photos are read twice and a "true" number of pups is agreed upon by the readers. This is used to correct for readers errors.
+- Comments, this column you can add various comments. If some photos for some reason are to be removed then write *Remove* in this column.
+
+**Important: The names of the various colums have been hard-coded in order to avoid trouble when loading the data. This might be changed in a future release of the package.**
+
+The other part of the data set is the staging data. The staging data is a series of staging surveys for a period of time where we find the proportion of pups in various pre-specified stages (with known duration). The staging data can either be obtained from flying low and count the number of seals in each stage, or having land based counts. These staging data is used to estimate a correction factor used to correct for pups that has not been born yet or pups that has left the ice. For harp seal pups this factor is genenrally close to 1 as the duration of the various stages is quite long so that the likelihood of catching all the pups when carrying out the photo survey is quite high. The duration various stages of the hooded pups are much shorter so it is likely to miss some pups at the time of the photo survey. Due to this the correction factor often turns out to be significant.
+
+To load the data set we use the `loadAndPrepareData` function. To read the data set the you need to specify the name of the survey (*survey*), the name of the data file (*fname*), wether it is harp or hooded seals or both (*population*), and various camera parameters used to calculate the length and the width (and thus the area coverered) of the photos (*CamParamLength*, *CamParamWidth*, and *CamParam*) based on the altitude the photos are taken from. These camera parameters are unique to the camera used.
+
+This function not only loads the data but does some preparations of the data to make it ready for the estimation routines.
+
+```{r eval=TRUE}
+dataList = loadAndPrepareData(survey = "WestIce2012",
+                                fname = "WestIce2012.csv",
+                                population = c("harp","hood"))
 ```
-When you run this function you can run it as it is and you will be asked to specify a folder where the data is stored. You can even decide to create a new folder if needed. If you already have prepared a folder for where to download the data and has set working directory to this folder you should use the option `chooseFolder = FALSE`, i.e.,
-```{r eval=FALSE}
-downloadData(chooseFolder = FALSE)
+
+Next we correct the pup counts for readers error using the `correctReading` function, i.e., 
+
+```{r eval=TRUE}
+correctedList = correctReading(dataList = dataList)
 ```
-After downloading the data repository you will have a **Data** folder and a **Scripts** folder. The **Data** folder contains the various harp and hooded seal data and the **Scripts** folder contains useful examples on how to perform a complete assessment.
 
-When analyzing these data the `rSPAMM` package assumes that you are in the root folder of the downloaded data, i.e., not in the **Data** or the **Scripts** folder.
+Now we are ready to estimate the pup abundance. First we use a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function and we often estimate the number of pubs based on both the uncorrected pup counts and the corrected pup counts.
 
+```{r eval=TRUE}
+#Estimate the number of pups using the uncorrected pup counts
+EstHarp = kingsley(dataList$xycord$x,
+                   dataList$data$HarpFinalCounts,
+                   dataList$data$Area,
+                   dataList$data$Transect)
 
+EstHooded = kingsley(dataList$xycord$x,
+                     dataList$data$HoodedFinalCounts,
+                     dataList$data$Area,
+                     dataList$data$Transect)
 
-## Data files
-All data that is described below will be loaded and used by the model to fit the population dynamics. 
+#Estimate number of pups using reader corrected pup counts
+EstHarpCorr = kingsley(correctedList$xycord$x,
+                       correctedList$data$CountsHarpCorr,
+                       correctedList$data$Area,
+                       correctedList$data$Transect)
+
+EstHoodedCorr = kingsley(correctedList$xycord$x,
+                         correctedList$data$CountsHoodedCorr,
+                         correctedList$data$Area,
+                         correctedList$data$Transect)
+```
+
 
 ### Catch data
 Catch data are found in the file *catch_data.dat* and the content of the file looks like this:

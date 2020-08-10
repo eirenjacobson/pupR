@@ -10,8 +10,11 @@
 #' lb3xy()
 
 loadAndPrepareData <- function(survey = "WestIce2012",
-                               fname = "WestIce2012_MichaelAndLotta_final.csv",
-                               population = c("harp","hood")
+                               fname = "WestIce2012.csv",
+                               population = c("harp","hood"),
+                               camParamLength = 0.06786,
+                               CamParamWidth = 0.10386,
+                               CamParam = 0.1005
                                )
 {
 
@@ -93,14 +96,14 @@ loadAndPrepareData <- function(survey = "WestIce2012",
   }
 
   #Find area covered of each photo
-  data$Area <- (0.06786*data$Altitude/0.1005)*(0.10386*data$Altitude/0.1005)
+  data$Area <- (camParamLength*data$Altitude/CamParam)*(CamParamWidth*data$Altitude/CamParam)
 
   #Find length covered of each photo (in Nautical Miles)
-  data$length <- (0.06786*data$Altitude/0.1005) / 1852
+  data$length <- (camParamLength*data$Altitude/CamParam) / 1852
 
   #Find transect width of each photo (in m)
-  data$trwidth <- (0.10386*data$Altitude/0.1005)
-  data$trwidthNM <- (0.10386*data$Altitude/0.1005) / 1852
+  data$trwidth <- (CamParamWidth*data$Altitude/CamParam)
+  data$trwidthNM <- (CamParamWidth*data$Altitude/CamParam) / 1852
 
   returnList = list()
   returnList$data = data

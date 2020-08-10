@@ -10,7 +10,9 @@ source("R/functions.r")
 #source("ADMButils.R")
 
 #Load the data and clean it up
-returnList = loadAndPrepareData()
+returnList = loadAndPrepareData(survey = "WestIce2012",
+                                fname = "WestIce2012.csv",
+                                population = c("harp","hood"))
 
 
 #Correct pup counts from photos for readers error
