@@ -197,6 +197,9 @@ kingsley <- function(x,count,area,transect,Spacing = 3,gap = 1)
     SE_new = sqrt(V_new);
     CV_new = 100*SE_new/N_new;
     estimates <- data.frame(N = round(N_new),SE = SE_new,CV = CV_new)
+
+    cat(paste0("\n Estimated number of pups is: ",estimates$N," (SE = ",round(estimates$SE),", CV = ",round(estimates$CV),")\n"))
+
     return(estimates)
 	}
 

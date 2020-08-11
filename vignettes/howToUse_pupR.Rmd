@@ -110,7 +110,7 @@ Next we correct the pup counts for readers error using the `correctReading` func
 correctedList = correctReading(dataList = dataList)
 ```
 
-Now we are ready to estimate the pup abundance. First we use a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function and we often estimate the number of pubs based on both the uncorrected pup counts and the corrected pup counts.
+Now we are ready to estimate the pup abundance. First we use a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function to estimate the pup abundance and we often estimate the pup abundance based on both the uncorrected pup counts and the corrected pup counts.
 
 ```{r eval=TRUE}
 #Estimate the number of pups using the uncorrected pup counts
@@ -125,18 +125,23 @@ EstHooded = kingsley(dataList$xycord$x,
                      dataList$data$Transect)
 
 #Estimate number of pups using reader corrected pup counts
-EstHarpCorr = kingsley(correctedList$xycord$x,
-                       correctedList$data$CountsHarpCorr,
-                       correctedList$data$Area,
-                       correctedList$data$Transect)
+
 
 EstHoodedCorr = kingsley(correctedList$xycord$x,
                          correctedList$data$CountsHoodedCorr,
                          correctedList$data$Area,
                          correctedList$data$Transect)
 ```
+The output of the `kingsley` function is a data frame containing the estimated number of pups N, the standard error SE, and the coefficient of variation CV. 
 
+When correcting for readers errors one estimate an uncertainty of the readers correction. This is obtained from either `VmeasHarp`or `VmeasHooded` in the output list from the `correctReading` function. Thus, both the Kingsley method and correcting for readers errors has an uncertainty, and to find the total uncertainty of the estimated pup abundance one need to combine these uncertainties, i.e.,
 
+```{r eval=TRUE}
+#Total uncertainty estimate of pup estimation + uncertainty of reader errors
+VarHarpCorr = EstHarpCorr$SE^2+correctedList$VmeasHarp
+VarHoodedCorr = EstHoodedCorr$SE^2+correctedList$VmeasHooded
+
+```
 ### Catch data
 Catch data are found in the file *catch_data.dat* and the content of the file looks like this:
 
