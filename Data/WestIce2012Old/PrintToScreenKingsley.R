@@ -1,0 +1,17 @@
+#Print results to screen
+cat("------------------------------------------------------------------------------------------------")
+cat("Harp seals \n")
+cat(paste("Total estimates of Harp seal pups without reading corrections: ",EstHarpFinal," , SE = ",sqrt(VarTotalHarp),", CV = ",100*sqrt(VarTotalHarp)/EstHarpFinal,"%\n"))
+cat(paste("Total estimates of Harp seal pups with with all corrections: ",EstHarpFinalCorr," , SE = ",sqrt(VarTotalHarpCorr),", CV = ",100*sqrt(VarTotalHarpCorr)/EstHarpFinalCorr,"%\n"))
+cat(paste("         * Estimate without reader/area correction:",EstHarp$N,", SE = ",EstHarp$SE,"\n"))
+cat(paste("         * Estimate with reader/area correction:   ",EstHarpCorr$N,", SE = ",EstHarpCorr$SE,"\n"))
+cat(paste("         * SE contribution from reader error",sqrt(VmeasHarp),"\n"))
+cat("------------------------------------------------------------------------------------------------")
+cat("Hooded seals \n")
+cat(paste("Total estimates of Hooded seal pups without corrections: ",EstHoodedFinal," , SE = ",sqrt(VarTotalHooded),", CV = ",100*sqrt(VarTotalHooded)/EstHarpFinal,"%\n"))
+cat(paste("Total estimates of Hooded seal pups with corrections: ",EstHoodedFinalCorr," , SE = ",sqrt(VarTotalHoodedCorr),", CV = ",100*sqrt(VarTotalHoodedCorr)/EstHoodedFinalCorr,"%\n"))
+cat(paste("         * Estimate without reader/area correction:",EstHooded$N,", SE = ",EstHooded$SE,"\n"))
+cat(paste("         * Estimate with reader/area correction:   ",EstHoodedCorr$N,", SE = ",EstHoodedCorr$SE,"\n"))
+cat(paste("         * SE contribution from reader error",sqrt(VmeasHooded),"\n"))
+cat("------------------------------------------------------------------------------------------------")
+

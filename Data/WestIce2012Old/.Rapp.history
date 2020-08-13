@@ -1,0 +1,884 @@
+ind = which(adata$YC == 2003)
+ind
+adata$alder[ind]
+ind = which(adata$YC == 2002)
+adata$alder[ind]
+ind = which(adata$Fangstårfra == 2002)
+ind = which(adata$YC == 2002)
+adata$Fangstårfra[ind]
+length(YCyears)
+i = 62
+YCyr = YCyears[i]
+YCyr
+surveydata = matrix(NA,length(YCyears),Amax+1)#
+#YCSmatrix = matrix(NA,25,Amax)#
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 0:Amax){#
+				if((YCyr + j) <= 2005){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j+1] = Nyc	#
+				}#
+			}#
+}
+surveydata
+surveydata = matrix(NA,length(YCyears),Amax)#
+#YCSmatrix = matrix(NA,25,Amax)#
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				if((YCyr + j) <= 2005){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j+1] = Nyc	#
+				}#
+			}#
+}
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				if((YCyr + j) <= 2005){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				}#
+			}#
+}
+surveydata
+i
+surveydata[i]
+surveydata[i,]
+ind = which(adata$YC == 2004)
+ind
+adata$alder[ind]
+j =
+1
+which((adata$YC == YCyr) & (adata$alder == j) )
+which((adata$YC == YCyr) & (adata$alder == 1) )
+which((adata$YC == YCyr) & (adata$alder == 2) )
+Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))
+j
+j = 2
+Nyc
+Nyc = length(which((adata$YC == YCyr) & (adata$alder == 2) ))
+Nyv
+Nyc
+YCyr
+surveydata[62,]
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+surveydata = matrix(NA,length(YCyears),Amax)#
+#YCSmatrix = matrix(NA,25,Amax)#
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				if((YCyr + j) <= 2005){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				}#
+			}#
+}
+surveydata[62,]
+YCyr
+j
+j = 1
+length(which((adata$YC == YCyr) & (adata$alder == j) ))
+length(which((adata$YC == YCyr) & (adata$alder == 2) ))
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				if((YCyr + j) <= 2006){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				}#
+			}#
+}
+surveydata[62,]
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				if((YCyr + j) <= 2009){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				}#
+			}#
+}
+surveydata[62,]
+surveydata = matrix(NA,length(YCyears),Amax)#
+#YCSmatrix = matrix(NA,25,Amax)#
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				#if((YCyr + j) <= 2009){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				}#
+			}#
+}
+surveydata = matrix(NA,length(YCyears),Amax)#
+#YCSmatrix = matrix(NA,25,Amax)#
+for (i in 1:length(YCyears)){#
+		YCyr = YCyears[i]#
+			for (j in 1:Amax){#
+				#if((YCyr + j) <= 2009){#
+					Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				#}#
+			}#
+}
+surveydata
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)))
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,YCyrs = YCyrs,StartYear = min(YCyears),EndYear= max(YCyears)))
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,YCyrs = YCyears,StartYear = min(YCyears),EndYear= max(YCyears)))
+which((adata$YC == YCyr) & (adata$alder == j) )
+which((adata$YC == 2004) & (adata$alder == 1) )
+which((adata$YC == 2004) & (adata$alder == 2) )
+cyr
+cyrs
+ind = which(adata$Fangstårfra == 2006)
+ind
+adata$YC(ind)
+adata$YC[ind]
+sort(adata$YC[ind])
+ind = which(adata$Fangstårfra == 1998)
+sort(adata$YC[ind])
+ind = which(adata$Fangstårfra == 2006)
+sort(adata$YC[ind])
+max(adata$YC)
+source("ADMButils.R")#
+#
+Amax = 20#
+adata <- read.table("aldersdata2.csv",sep = ",",header = TRUE)#
+adata$alder = array(NA,length(adata$Lestalder1))#
+#
+years = unique(adata$Fangstårfra)#
+Nyears = length(years)#
+#
+indyears = list()#
+#Bring all readings into one column#
+for (i in 1:Nyears){#
+	indyears[[i]] = which(adata$Fangstårfra == years[i])#
+	lestalder = matrix(NA,length(indyears[[i]]),6)#
+	lestalder[,1] = adata$Lestalder1[indyears[[i]]]#
+	lestalder[,2] = adata$Lestalder2[indyears[[i]]]#
+	lestalder[,3] = adata$Lestalder3[indyears[[i]]]#
+	lestalder[,4] = adata$Lestalder4[indyears[[i]]]#
+	lestalder[,5] = adata$Lestalder5[indyears[[i]]]#
+	lestalder[,6] = adata$Lestalder6[indyears[[i]]]#
+	adata$alder[indyears[[i]]]= apply(lestalder,1,max,na.rm = TRUE)#
+}#
+#
+#remove all 99 year old seals#
+ind99 = which(adata$alder == 99)#
+adata = adata[-ind99,]#
+#Create a data set with only males#
+#indM = which(adata$Sex == 1)#
+#adata = adata[indM,]#
+#
+#Trunker med 20 års alder#
+indage = which(adata$alder > Amax)#
+adata$alder[indage] = Amax#
+#
+#Remove data from 1980#
+indyear = which(adata$Fangstårfra == 1980)#
+adata = adata[-indyear,]#
+cyrs = unique(adata$Fangstårfra)#
+#
+adata$YC = adata$Fangstårfra - adata$alder#
+#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+surveydata = matrix(NA,length(YCyears),Amax)#
+#YCSmatrix = matrix(NA,25,Amax)#
+#
+surveydata = matrix(NA,700,4)#
+counter = 1#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+		#ages = sort(unique(adata$alder[adata$Fangstårfra == cyr]))#
+		ycs = sort(unique(adata$YC[adata$Fangstårfra == cyr]))#
+		for (j in 1:length(ycs)){#
+			Nyc = length(which((adata$Fangstårfra == cyr)&(adata$YC==ycs[j])))#
+			surveydata[counter,1] = ycs[j]#
+			surveydata[counter,2] = cyr-ycs[j]#
+			surveydata[counter,3] = (Nyc)#
+			surveydata[counter,4] = i#
+			counter = counter + 1#
+		}#
+}
+surveydata
+indna = which(is.na(surveydata[,1]))#
+surveydata = surveydata[-indna,]
+surveydata
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,YCyrs = YCyears,StartYear = min(YCyears),EndYear= max(YCyears)))
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,StartYear = min(YCyears),EndYear= max(YCyears)))
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,Ncyr = length(cyrs),cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)))
+surveydata = matrix(NA,length(cyrs),Amax)#
+#
+for (i in 1:length(cyrs)){#
+		YCyr = YCyears[i]#
+		cyr = cyrs(i)#
+			for (j in 1:Amax){#
+				#if((YCyr + j) <= 2009){#
+					Nyc = length(which((adata$alder == j) & (adata$YC == cyr-j)))#
+					#Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				#}#
+			}#
+}
+for (i in 1:length(cyrs)){#
+		YCyr = YCyears[i]#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+				#if((YCyr + j) <= 2009){#
+					Nyc = length(which((adata$alder == j) & (adata$YC == cyr-j)))#
+					#Nyc = length(which((adata$YC == YCyr) & (adata$alder == j) ))#
+					surveydata[i,j] = Nyc	#
+				#}#
+			}#
+}
+surveydata
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)))
+system("./YCS -mno 10535")
+cyrs
+2006-1:20
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+STD <- read.table("YCS.std",col.names = c("Indx","Name","Estimate","std"),skip = 1)
+STD
+YCS = STD$Estimate[88:150]#
+YCS.std = STD$std[88:150]#
+#
+YCSlower = YCS-1.95*YCS.std#
+YCSupper = YCS+1.95*YCS.std#
+#
+# Lsigma = STD$Estimate[1:25]#
+# Lsigma.std = STD$std[1:25]#
+#
+# Lsigmalower = Lsigma - 1.96*Lsigma.std#
+# Lsigmaupper = Lsigma + 1.96*Lsigma.std#
+#
+Myr = STD$Estimate[151:170]#
+Myr.std = STD$std[151:170]#
+#
+Mlower = Myr - 1.96*Myr.std#
+Mupper = Myr + 1.96*Myr.std
+YCyears = 1943:2005#
+#
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,YCS,type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(1:20,Mupper,type = "n",lwd = 3,xlab = "Age (year)",ylab = "Mortality",ylim = c(0,0.8),bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(1:20,rev(1:20)),c((Mlower),rev((Mupper))),col = "grey90",border = NA)#
+lines(1:20,Myr,type = "l",lwd = 3)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,YCS,type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+20*25
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,exp(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,log(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+surveydata = matrix(NA,700,4)#
+counter = 1#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+		#ages = sort(unique(adata$alder[adata$Fangstårfra == cyr]))#
+		ycs = sort(unique(adata$YC[adata$Fangstårfra == cyr]))#
+		for (j in 1:length(ycs)){#
+			Nyc = length(which((adata$Fangstårfra == cyr)&(adata$YC==ycs[j])))#
+			surveydata[counter,1] = ycs[j]#
+			surveydata[counter,2] = cyr-ycs[j]#
+			surveydata[counter,3] = (Nyc)#
+			surveydata[counter,4] = i#
+			counter = counter + 1#
+		}#
+}
+surveydata
+indna = which(is.na(surveydata[,1]))#
+surveydata = surveydata[-indna,]
+surveydata
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,StartYear = min(YCyears),EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+log(0)
+cyrs
+surveydata = matrix(NA,length(cyrs),Amax)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+					Nyc = length(which((adata$alder == j) & (adata$FangstårFra == cyr)))	#
+					surveydata[i,j] = Nyc	#
+			}#
+}
+i
+j
+cyr = cyrs[i]
+Nyc = length(which((adata$alder == j) & (adata$FangstårFra == cyr)))
+names(adata)
+Nyc = length(which((adata$alder == j) & (adata$Fangstårfra == cyr)))
+Nyc
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+					Nyc = length(which((adata$alder == j) & (adata$Fangstårfra == cyr)))	#
+					surveydata[i,j] = Nyc	#
+			}#
+}
+surveydata
+cyrs
+cyr
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+STD <- read.table("YCS.std",col.names = c("Indx","Name","Estimate","std"),skip = 1)#
+#
+YCS = STD$Estimate[88:150]#
+YCS.std = STD$std[88:150]#
+#
+YCSlower = YCS-1.95*YCS.std#
+YCSupper = YCS+1.95*YCS.std#
+#
+# Lsigma = STD$Estimate[1:25]#
+# Lsigma.std = STD$std[1:25]#
+#
+# Lsigmalower = Lsigma - 1.96*Lsigma.std#
+# Lsigmaupper = Lsigma + 1.96*Lsigma.std#
+#
+Myr = STD$Estimate[151:170]#
+Myr.std = STD$std[151:170]#
+#
+Mlower = Myr - 1.96*Myr.std#
+Mupper = Myr + 1.96*Myr.std#
+################################
+# Figures#
+################################
+#
+YCyears = 1943:2005#
+#
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)#
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(1:20,Mupper,type = "n",lwd = 3,xlab = "Age (year)",ylab = "Mortality",ylim = c(0,0.8),bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(1:20,rev(1:20)),c((Mlower),rev((Mupper))),col = "grey90",border = NA)#
+lines(1:20,Myr,type = "l",lwd = 3)
+Amax = 25#
+adata <- read.table("aldersdata2.csv",sep = ",",header = TRUE)#
+adata$alder = array(NA,length(adata$Lestalder1))#
+#
+years = unique(adata$Fangstårfra)#
+Nyears = length(years)#
+#
+indyears = list()#
+#Bring all readings into one column#
+for (i in 1:Nyears){#
+	indyears[[i]] = which(adata$Fangstårfra == years[i])#
+	lestalder = matrix(NA,length(indyears[[i]]),6)#
+	lestalder[,1] = adata$Lestalder1[indyears[[i]]]#
+	lestalder[,2] = adata$Lestalder2[indyears[[i]]]#
+	lestalder[,3] = adata$Lestalder3[indyears[[i]]]#
+	lestalder[,4] = adata$Lestalder4[indyears[[i]]]#
+	lestalder[,5] = adata$Lestalder5[indyears[[i]]]#
+	lestalder[,6] = adata$Lestalder6[indyears[[i]]]#
+	adata$alder[indyears[[i]]]= apply(lestalder,1,max,na.rm = TRUE)#
+}#
+#
+#remove all 99 year old seals#
+ind99 = which(adata$alder == 99)#
+adata = adata[-ind99,]#
+#Create a data set with only males#
+#indM = which(adata$Sex == 1)#
+#adata = adata[indM,]#
+#
+#Trunker med 20 års alder#
+indage = which(adata$alder > Amax)#
+adata$alder[indage] = Amax#
+#
+#Remove data from 1980#
+indyear = which(adata$Fangstårfra == 1980)#
+adata = adata[-indyear,]#
+cyrs = unique(adata$Fangstårfra)#
+#
+adata$YC = adata$Fangstårfra - adata$alder#
+#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+#YCSmatrix = matrix(NA,25,Amax)#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+surveydata = matrix(NA,length(cyrs),Amax)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+					Nyc = length(which((adata$alder == j) & (adata$Fangstårfra == cyr)))	#
+					surveydata[i,j] = Nyc	#
+			}#
+}
+surveydata
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+max(adata$alder)
+system("./YCS -mno 10535")
+cyrs
+adata$alder[adata$Fangstårfra == 1963]
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(cyrs)-Amax,EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+source("ADMButils.R")#
+#
+Amax = 20#
+adata <- read.table("aldersdata2.csv",sep = ",",header = TRUE)#
+adata$alder = array(NA,length(adata$Lestalder1))#
+#
+years = unique(adata$Fangstårfra)#
+Nyears = length(years)#
+#
+indyears = list()#
+#Bring all readings into one column#
+for (i in 1:Nyears){#
+	indyears[[i]] = which(adata$Fangstårfra == years[i])#
+	lestalder = matrix(NA,length(indyears[[i]]),6)#
+	lestalder[,1] = adata$Lestalder1[indyears[[i]]]#
+	lestalder[,2] = adata$Lestalder2[indyears[[i]]]#
+	lestalder[,3] = adata$Lestalder3[indyears[[i]]]#
+	lestalder[,4] = adata$Lestalder4[indyears[[i]]]#
+	lestalder[,5] = adata$Lestalder5[indyears[[i]]]#
+	lestalder[,6] = adata$Lestalder6[indyears[[i]]]#
+	adata$alder[indyears[[i]]]= apply(lestalder,1,max,na.rm = TRUE)#
+}#
+#
+#remove all 99 year old seals#
+ind99 = which(adata$alder == 99)#
+adata = adata[-ind99,]#
+#Create a data set with only males#
+#indM = which(adata$Sex == 1)#
+#adata = adata[indM,]#
+#
+#Trunker med 20 års alder#
+indage = which(adata$alder > Amax)#
+adata$alder[indage] = Amax#
+#
+#Remove data from 1980#
+indyear = which(adata$Fangstårfra == 1980)#
+adata = adata[-indyear,]#
+cyrs = unique(adata$Fangstårfra)#
+#
+adata$YC = adata$Fangstårfra - adata$alder#
+#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+#YCSmatrix = matrix(NA,25,Amax)#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+surveydata = matrix(NA,length(cyrs),Amax)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+					Nyc = length(which((adata$alder == j) & (adata$Fangstårfra == cyr)))	#
+					surveydata[i,j] = Nyc	#
+			}#
+}
+file_write("YCS.dat",list(nrows = length(surveydata[,1]),ncol = length(surveydata[2,]),surveydata = surveydata,cyrs = cyrs,StartYear = min(YCyears),EndYear= max(YCyears)+1))
+system("./YCS -mno 10535")
+source("ADMButils.R")#
+#
+Amax = 20#
+adata <- read.table("aldersdata2.csv",sep = ",",header = TRUE)#
+adata$alder = array(NA,length(adata$Lestalder1))#
+#
+years = unique(adata$Fangstårfra)#
+Nyears = length(years)#
+#
+indyears = list()#
+#Bring all readings into one column#
+for (i in 1:Nyears){#
+	indyears[[i]] = which(adata$Fangstårfra == years[i])#
+	lestalder = matrix(NA,length(indyears[[i]]),6)#
+	lestalder[,1] = adata$Lestalder1[indyears[[i]]]#
+	lestalder[,2] = adata$Lestalder2[indyears[[i]]]#
+	lestalder[,3] = adata$Lestalder3[indyears[[i]]]#
+	lestalder[,4] = adata$Lestalder4[indyears[[i]]]#
+	lestalder[,5] = adata$Lestalder5[indyears[[i]]]#
+	lestalder[,6] = adata$Lestalder6[indyears[[i]]]#
+	adata$alder[indyears[[i]]]= apply(lestalder,1,max,na.rm = TRUE)#
+}#
+#
+#remove all 99 year old seals#
+ind99 = which(adata$alder == 99)#
+adata = adata[-ind99,]#
+#Create a data set with only males#
+#indM = which(adata$Sex == 1)#
+#adata = adata[indM,]#
+#
+#Trunker med 20 års alder#
+indage = which(adata$alder > Amax)#
+adata$alder[indage] = Amax#
+#
+#Remove data from 1980#
+indyear = which(adata$Fangstårfra == 1980)#
+adata = adata[-indyear,]#
+cyrs = unique(adata$Fangstårfra)#
+#
+adata$YC = adata$Fangstårfra - adata$alder#
+#
+cyrs = sort(unique(adata$Fangstårfra))#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+#YCSmatrix = matrix(NA,25,Amax)#
+YCyears = min(adata$YC):max(adata$YC)#
+#
+surveydata = matrix(NA,length(cyrs),Amax)#
+#
+for (i in 1:length(cyrs)){#
+		cyr = cyrs[i]#
+			for (j in 1:Amax){#
+					Nyc = length(which((adata$alder == j) & (adata$Fangstårfra == cyr)))	#
+					surveydata[i,j] = Nyc	#
+			}#
+}
+system("./YCS -mno 10535")
+exp(log(2))
+log(0)
+STD <- read.table("YCS.std",col.names = c("Indx","Name","Estimate","std"),skip = 1)
+system("./YCS -mno 10535")
+STD <- read.table("YCS.std",col.names = c("Indx","Name","Estimate","std"),skip = 1)#
+#
+YCS = STD$Estimate[88:150]#
+YCS.std = STD$std[88:150]#
+#
+YCSlower = YCS-1.95*YCS.std#
+YCSupper = YCS+1.95*YCS.std#
+#
+# Lsigma = STD$Estimate[1:25]#
+# Lsigma.std = STD$std[1:25]#
+#
+# Lsigmalower = Lsigma - 1.96*Lsigma.std#
+# Lsigmaupper = Lsigma + 1.96*Lsigma.std#
+#
+Myr = STD$Estimate[151:170]#
+Myr.std = STD$std[151:170]#
+#
+Mlower = Myr - 1.96*Myr.std#
+Mupper = Myr + 1.96*Myr.std#
+################################
+# Figures#
+################################
+#
+YCyears = 1943:2005#
+#
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,exp(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,exp(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,exp(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+#polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,exp(YCS),type = "l",lwd = 3)
+system("./YCS -mno 10535")
+STD <- read.table("YCS.std",col.names = c("Indx","Name","Estimate","std"),skip = 1)#
+#
+YCS = STD$Estimate[88:150]#
+YCS.std = STD$std[88:150]#
+#
+YCSlower = YCS-1.95*YCS.std#
+YCSupper = YCS+1.95*YCS.std#
+#
+# Lsigma = STD$Estimate[1:25]#
+# Lsigma.std = STD$std[1:25]#
+#
+# Lsigmalower = Lsigma - 1.96*Lsigma.std#
+# Lsigmaupper = Lsigma + 1.96*Lsigma.std#
+#
+Myr = STD$Estimate[151:170]#
+Myr.std = STD$std[151:170]#
+#
+Mlower = Myr - 1.96*Myr.std#
+Mupper = Myr + 1.96*Myr.std#
+################################
+# Figures#
+################################
+#
+YCyears = 1943:2005#
+#
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(YCyears,(YCS),type = "n",lwd = 3,xlab = "Year",ylab = "Year class strength",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+polygon(c(YCyears,rev(YCyears)),c((YCSlower),rev((YCSupper))),col = "grey90",border = NA)#
+lines(YCyears,(YCS),type = "l",lwd = 3)
+system("./YCS -mno 10535")
+tmp = read.table("YCS.rep",sep = "")
+tmp
+tmp[1,]
+sum(tmp[1,])
+sum(tmp[2,])
+sum(tmp[3,])
+sum(tmp[4,])
+sum(tmp[5,])
+sum(tmp[6,])
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(1:20,type = "n",lwd = 3,xlab = "Year",ylab = "P",bty = "l",cex.axis = 1.0,cex.lab = 1.8)#
+for (i in 1:20){#
+	lines(1:20,tmp[i,])#
+}
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(1:20,type = "n",lwd = 3,xlab = "Year",ylab = "P",bty = "l",ylim = c(0,1),cex.axis = 1.0,cex.lab = 1.8)#
+for (i in 1:20){#
+	lines(1:20,tmp[i,])#
+}
+quartz("",9,7)#
+par(mar=c(6,5,4,2),bg = "white")#
+plot(1:20,type = "n",lwd = 3,xlab = "Year",ylab = "P",bty = "l",ylim = c(0,0.4),cex.axis = 1.0,cex.lab = 1.8)#
+for (i in 1:20){#
+	lines(1:20,tmp[i,])#
+}
+data <- read.table("WestIce2012_MichaelAndLotta_final.csv",header = TRUE,sep = ",")#
+#
+indRemove = which(data$Comments == "Remove")#
+data <- data[-indRemove,]
+str(data)
+data$BB1Reading
+max(data$BB1Reading)
+max(data$BB1Reading,na.rm)
+max(data$BB1Reading,na.omit = TRUE)
+is.na(data$BB1Reading)
+indbb = 1-is.na(data$BB1Reading)
+indbb
+indbb = which(1-is.na(data$BB1Reading) == TRUE)
+str(data)
+indwp = which(1-is.na(data$WP1Reading) == TRUE)
+indbb
+indwp
+test = union(indbb,indwp)
+length(test)
+newdata = data.frame(Reader = data$Reader[test],ID = data$PhotoNo[test],BB = data$BB1Reading[test],WP = data$WP1Reading[test])
+newdata
+write.table(newdata,"nonzeroes.txt",sep = "")
+write.table(newdata,"nonzeroes.txt",sep = " ")
+write.table(newdata,"nonzeroes.csv",sep = ",")
+source("functions.r")#
+source("ADMButils.R")#
+#
+library(mgcv)#
+#
+Spacing = 3 			#Distance between transects in NM#
+gap = 1					#Maximum distance allowed, for removing holes where camera has been stopped due to#
+						#flying over open water
+data <- read.table("WestIce2012_MichaelAndLotta_final.csv",header = TRUE,sep = ",")
+names(data)
+data$FrameLat
+names(data)
+data$WP1Reading
+indRemove = which(data$Comments == "Remove")#
+data <- data[-indRemove,]#
+#
+dimframe <- dim(data)#
+Nphotos <- dimframe[1]
+ind2countHarp = which(data$WP2Reading != "NA")#
+ind2countHooded = which(data$BB2Reading != "NA")#
+#
+data$HarpFinalCounts <- data$WP1Reading#
+data$HarpFinalCounts[ind2countHarp] <- data$WP2Reading[ind2countHarp]#
+indNAHarp = which(is.na(data$HarpFinalCounts))#
+data$HarpFinalCounts[indNAHarp] = 0
+data$HoodedFinalCounts <- data$BB1Reading#
+data$HoodedFinalCounts[ind2countHooded] <- data$BB2Reading[ind2countHooded]#
+indNAHooded = which(is.na(data$HoodedFinalCounts))#
+data$HoodedFinalCounts[indNAHooded] = 0
+data$HarpFinalCounts
+xycord = lb2xy(data$FrameLon,data$FrameLat,mean(data$FrameLon),mean(data$FrameLat))
+data$Area <- (0.06786*data$Altitude/0.1005)*(0.10386*data$Altitude/0.1005)
+data$length <- (0.06786*data$Altitude/0.1005) / 1852
+data$lengthNM <- (0.06786*data$Altitude/0.1005) / 1852
+data$length <- (0.06786*data$Altitude/0.1005)
+data$trwidth <- (0.10386*data$Altitude/0.1005)#
+data$trwidthNM <- (0.10386*data$Altitude/0.1005) / 1852
+WestIce2012 = data.frame()
+WestIce2012$latitude <- data$FrameLat
+rm(WestIce2012)
+WestIce2012$latitude <- data$FrameLat
+WestIce2012 = data.frame("latitude" = data$FrameLat)
+WestIce2012$longitude <- data$FrameLon
+class(xycord)
+dim(xycord)
+dim(WestIce2012)
+names(xycord)
+WestIce2012$x <- xycord$x
+WestIce2012$y <- xycord$y
+WestIce2012$harps <- data$HarpFinalCounts
+WestIce2012$hooded <- data$HoodedFinalCounts
+source("adjustareaforoverlap.R")
+source("correctreading.R")
+WestIce2012$area <- data$Area
+WestIce2012$length <- data$length
+WestIce2012$lengthNm <- data$lengthNM
+WestIce2012$width <- data$width
+WestIce2012$width <- data$trwidth
+WestIce2012$widthNm <- data$trwidthNM
+names(WestIce2012)
+WestIce2012
+??write.csv
+?write.csv
+write.csv(WestIce2012,file = "WestIce2012.csv")
+test <- read.csv(file = "WestIce2012.csv")
+head(test)
+test <- read.csv(file = "WestIce2012.csv",row.names = FALSE)
+test <- read.csv(file = "WestIce2012.csv",row.names = F)
+test <- read.csv(file = "WestIce2012.csv",row.names = FALSE)
+test <- read.csv(file = "WestIce2012.csv",row.names = TRUE)
+test <- read.csv(file = "WestIce2012.csv",row.names = "TRUE")
+write.csv(WestIce2012,file = "WestIce2012.csv",row.names = FALSE)
+test <- read.csv(file = "WestIce2012.csv")
+head(test)
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+recsize = matrix(NA,length(data$Area),2)#
+recsize[,1] = data$length#
+recsize[,2] = data$trwidthNM#
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(-10,-5),ylim = c(-17,-10))#
+for (i in 1:500){#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+}
+length(xycord$x)
+for (i in 1:2792){#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+}
+data$length <- (0.06786*data$Altitude/0.1005) / 1852
+data$trwidthNM <- (0.10386*data$Altitude/0.1005) / 1852
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+recsize = matrix(NA,length(data$Area),2)#
+recsize[,1] = data$length#
+recsize[,2] = data$trwidthNM#
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",13,7)#
+par(mfrow = c(1,2))#
+par(mar=c(6,5,4,5),bg = "white")#
+symbols(data$FrameLon,data$FrameLat, circles=sqrt(data$HarpFinalCounts/3.141593), inches=0.2, fg="white", bg="red", xlab="Longitude", ylab="Latitude",main = "Harp seal pups",cex.lab = 1.5,cex.main = 1.5,bty = "l")#
+text(-19,72.15,"(A)",cex = 1.5)#
+#symbols(c(-16,-16,-16),c(71.0,70.9,70.8),circles = sqrt(seq(1,max(data$HoodedFinalCounts),length = 4)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+symbols(c(-16-0.5,-16-0.5,-16-0.5,-16-0.5),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),circles = sqrt(c(150,100,50,1)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+text(c(-16-0.2,-16-0.2,-16-0.2,-16-0.2),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),c("150","100","50","1"))
+quartz("",13,7)#
+par(mfrow = c(1,2))#
+par(mar=c(6,5,4,5),bg = "white")#
+symbols(data$FrameLon,data$FrameLat, circles=sqrt(data$HarpFinalCounts/3.141593), inches=0.2, fg="white", bg="red", xlab="Longitude", ylab="Latitude",main = "Harp seal pups",cex.lab = 1.5,cex.main = 1.5,bty = "l")#
+text(-19,72.15,"(A)",cex = 1.5)#
+#symbols(c(-16,-16,-16),c(71.0,70.9,70.8),circles = sqrt(seq(1,max(data$HoodedFinalCounts),length = 4)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+symbols(c(-16-0.5,-16-0.5,-16-0.5,-16-0.5),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),circles = sqrt(c(150,100,50,1)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+text(c(-16-0.2,-16-0.2,-16-0.2,-16-0.2),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),c("150","100","50","1"))#
+symbols(data$FrameLon,data$FrameLat, circles=sqrt(data$HoodedFinalCounts/3.141593), inches=0.2, fg="white", bg="red", xlab="Longitude", ylab="Latitude",main = "Hooded seal pups",cex.lab = 1.5,cex.main = 1.5,bty = "l")#
+text(-19,72.15,"(B)",cex = 1.5)#
+symbols(c(-16-0.5,-16-0.5,-16-0.5,-16-0.5),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),circles = sqrt(c(12,8,4,1)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+text(c(-16-0.2,-16-0.2,-16-0.2,-16-0.2),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),c("12","8","4","1"))
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+recsize = matrix(NA,length(data$Area),2)#
+recsize[,1] = data$length#
+recsize[,2] = data$trwidthNM#
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(-10,-5),ylim = c(-17,-10))
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",13,7)#
+par(mfrow = c(1,2))#
+par(mar=c(6,5,4,5),bg = "white")#
+symbols(data$FrameLon,data$FrameLat, circles=sqrt(data$HarpFinalCounts/3.141593), inches=0.2, fg="white", bg="red", xlab="Longitude", ylab="Latitude",main = "Harp seal pups",cex.lab = 1.5,cex.main = 1.5,bty = "l")#
+text(-19,72.15,"(A)",cex = 1.5)#
+#symbols(c(-16,-16,-16),c(71.0,70.9,70.8),circles = sqrt(seq(1,max(data$HoodedFinalCounts),length = 4)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+symbols(c(-16-0.5,-16-0.5,-16-0.5,-16-0.5),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),circles = sqrt(c(150,100,50,1)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+text(c(-16-0.2,-16-0.2,-16-0.2,-16-0.2),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),c("150","100","50","1"))#
+symbols(data$FrameLon,data$FrameLat, circles=sqrt(data$HoodedFinalCounts/3.141593), inches=0.2, fg="white", bg="red", xlab="Longitude", ylab="Latitude",main = "Hooded seal pups",cex.lab = 1.5,cex.main = 1.5,bty = "l")#
+text(-19,72.15,"(B)",cex = 1.5)#
+symbols(c(-16-0.5,-16-0.5,-16-0.5,-16-0.5),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),circles = sqrt(c(12,8,4,1)/3.141593), inches=0.2, fg="white", bg="red",,add = TRUE)#
+text(c(-16-0.2,-16-0.2,-16-0.2,-16-0.2),c(71.0+0.1,70.85+0.1,70.7+0.1,70.55+0.1),c("12","8","4","1"))
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(-10,-5),ylim = c(-17,-10))#
+for (i in 1:500){#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+}
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(min(xycord$x),max(xycord$x)),ylim = c(min(xycord$y),max(xycord$y))#
+#
+recsize = matrix(NA,length(data$Area),2)#
+recsize[,1] = data$length#
+recsize[,2] = data$trwidthNM#
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(min(xycord$x),max(xycord$x)),ylim = c(min(xycord$y),max(xycord$y))
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(min(xycord$x),max(xycord$x)),ylim = c(min(xycord$y),max(xycord$y)))
+recsize = matrix(NA,length(data$Area),2)#
+recsize[,1] = data$length#
+recsize[,2] = data$trwidthNM#
+symbols(xycord$x,xycord$y, rectangles=recsize, inches=FALSE, fg="white", bg="black", xlab="Relative position in NM (East-West)", ylab="Relative position in NM (North-South)",main = "Area covered by photos",cex.lab = 1.5,cex.main = 1.5,bty = "l",add = TRUE)
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(-10,-5),ylim = c(-17,-10))#
+for (i in 1:500){#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+}
+quartz("",9,7)#
+par(mar=c(6,5,4,5),bg = "white")#
+plot(xycord$x,xycord$y,type = "n",xlim = c(min(xycord$x),max(xycord$x)),ylim = c(min(xycord$y),max(xycord$y)))
+for (i in 1:500){#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]+data$length[i]/2)),c((xycord$y[i]-data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]+data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]+data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+	lines(c((xycord$x[i]-data$length[i]/2),(xycord$x[i]-data$length[i]/2)),c((xycord$y[i]+data$trwidthNM[i]/2),(xycord$y[i]-data$trwidthNM[i]/2)),lwd = 1,col = "red")#
+}

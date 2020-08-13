@@ -110,7 +110,13 @@ Next we correct the pup counts for readers error using the `correctReading` func
 correctedList = correctReading(dataList = dataList)
 ```
 
-Now we are ready to estimate the pup abundance. First we use a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function to estimate the pup abundance and we often estimate the pup abundance based on both the uncorrected pup counts and the corrected pup counts.
+## Estimating the number of pups
+
+In this section we will show how to estimate the number of pups based on the pup counts from the aerial photos.
+
+### The Kingsley method
+
+We first present a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function to estimate the pup abundance and we often estimate the pup abundance based on both the uncorrected pup counts and the corrected pup counts.
 
 ```{r eval=TRUE}
 #Estimate the number of pups using the uncorrected pup counts
@@ -142,6 +148,91 @@ VarHarpCorr = EstHarpCorr$SE^2+correctedList$VmeasHarp
 VarHoodedCorr = EstHoodedCorr$SE^2+correctedList$VmeasHooded
 
 ```
+A quick summary of the estimated number of pups with the uncertainty is:
+
+```{r eval=TRUE, echo=TRUE}
+cat("\n###############################\n")
+cat("Estimated number of harp seal pups:\n")
+cat(paste0("    Uncorected pup counts: N = ",EstHarp$N," (SE =",EstHarp$SE," CV = ",EstHarp$CV,")\n"))
+cat(paste0("    Corrected pup counts:  N = ",EstHarpCorr$N," (SE =",round(sqrt(VarHarpCorr))," CV = ",round(100*sqrt(VarHarpCorr)/EstHarpCorr$N),")\n"))
+cat("\n ------------------------------\n")
+cat("Estimated number of hooded seal pups:\n")
+cat(paste0("    Uncorected pup counts: N = ",EstHooded$N," (SE =",EstHooded$SE," CV = ",EstHooded$CV,")\n"))
+cat(paste0("    Corrected pup counts:  N = ",EstiHooded$N," (SE =",round(sqrt(VarHoodedCorr))," CV = ",round(100*sqrt(VarHoodedCorr)/EstHoodedCorr$N),")\n"))
+cat("\n###############################\n")
+```
+
+### GAM based pup abundance
+
+In this section we present a method based on Generalized Additive Models (GAMs) to estimate the pup density over the whelping patch. From this we obtain both an estimate and a uncertainty of the pup abundance. For details of the GAM method see (ref).
+
+To estimate the pup abundance using GAMs we use the `GAMestimate` function. As we did for the Kingsley method we estimate the pup abundance using both the uncorrected and the corrected pup counts. We can also specify for wich population to estimate the pup abundance, or both. In the example below we estimate the pup abundance for both populations.
+
+In addition we have to specify for which distribution to use in the model. At the moment one can choose between the *Poisson-* or the *Negative binomial-* distributions, depending on the sparsity of the data. In this example we use the negative binomial distribution.
+
+To estimate the pup abundance using uncorrected pup counts we do:
+
+```{r eval=TRUE}
+EstGAM = GAMestimate(harpcounts =
+                       dataList$data$HarpFinalCounts,
+                     hoodedcounts =
+                       dataList$data$HoodedFinalCounts,
+                     area = dataList$data$Area,
+                     xycord = dataList$xycord,
+                     transect = dataList$data$Transect,
+                     distr = "negbin")
+```
+
+To estimate the pup abundance using corrected pup counts:
+
+```{r eval=TRUE}
+EstGAMCorr = GAMestimate(harpcounts = 
+                           correctedList$data$CountsHarpCorr,
+                         hoodedcounts =correctedList$data$CountsHoodedCorr,
+                         area = correctedList$data$Area,
+                         xycord = correctedList$xycord,
+                         transect = correctedList$data$Transect,
+                         distr = "negbin")
+```
+
+We could do the same, but with a Poisson distribution and then check the goodnes-off-fit for the different models. If you do that it will show that the Negative Binomial distribution is a better model due to over-dispersion.
+
+The total uncertainty estimate of the pup abundance using GAMs' using corrected pup counts is:
+
+```{r eval=TRUE}
+VarHarpGAMCorr = EstGAMCorr$SEHarpGAM^2+correctedList$VmeasHarp
+VarHoodedGAMCorr = EstGAMCorr$SEHoodedGAM^2+correctedList$VmeasHooded
+```
+
+
+## Correction factor
+
+In this section we will see how you can estimate the correction factor to correct for pups which have not been born yet or pups that have left the ice. The correction factor is estimated from a different data set than the aerial photos. The data needed is staging data. This is obtained by flying over the whelping patch for a period of time and count the number of pups in various pre-defined age/growt stages with known length. This applies for both populations, but each population are divided in different stage classes and the length of the various stages are different. After the pups reach a certain mature stage it is assumed that the pup leaves the ice, and is thus unavailable for counting if the aerial photo survey are carried out after the pups have left the ice. Based on this data and the known length of the various stages one can estimate the date of the peak of the whelping season and through a model developed by (ref) one can estimate the number of pups on the ice at any date in the whelping season. 
+
+
+
+
+QHarp = 0.99
+SEQHarp = 0.00014
+QHooded = 0.82
+SEQHooded = 0.0134
+
+estimates = list()
+estimates$EstHarpFinal = EstHarp$N/QHarp
+estimates$EstHarpFinalCorr = EstHarpCorr$N/QHarp
+estimates$EstHoodedFinal = EstHooded$N/QHooded
+estimates$EstHoodedFinalCorr = EstHoodedCorr$N/QHooded
+
+estimates$VarTotalHarp = (1/QHarp)^2*EstHarp$SE^2+(EstHarp$N/QHarp^2)*SEQHarp^2
+estimates$VarTotalHooded = (1/QHooded)^2*EstHooded$SE^2+(EstHooded$N/QHooded^2)*SEQHooded^2
+estimates$VarTotalHarpCorr = (1/QHarp)^2*VarHarpCorr+(EstHarpCorr$N/QHarp^2)*SEQHarp^2
+estimates$VarTotalHoodedCorr = (1/QHooded)^2*VarHoodedCorr+(EstHoodedCorr$N/QHooded^2)*SEQHooded^2
+
+#Print pup production estimates based on the Kingsley method to screen
+printKingsley2screen(estimates)
+
+## Old stuff beyond this point. Not relevant. 
+
 ### Catch data
 Catch data are found in the file *catch_data.dat* and the content of the file looks like this:
 

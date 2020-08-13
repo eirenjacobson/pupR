@@ -1,0 +1,15 @@
+cat("------------------------------------------------------------------------------------------------")
+cat("Harp seals \n")
+cat(paste("Total estimates of Harp seal pups without correction: ",NHarpGAMFinal," , SE = ",sqrt(VarTotalHarpGAM),", CV = ",100*sqrt(VarTotalHarpGAM)/NHarpGAMFinal,"%\n"))
+cat(paste("Total estimates of Harp seal pups with correction: ",NHarpGAMCorr," , SE = ",sqrt(VarTotalHarpGAMCorr),", CV = ",100*sqrt(VarTotalHarpGAMCorr)/NHarpGAMCorr,"%\n"))
+cat(paste("  * Estimate without reader correction:",NHarpGAM," SE = ",SEHarpGAM,", CV = ",CVHarpGAM,"% \n"))
+cat(paste("  * Estimate with reader correction:   ",NHarpGAMCorr," SE = ",SEHarpGAMCorr,", CV = ",CVHarpGAMCorr,"% \n"))
+cat("------------------------------------------------------------------------------------------------")
+cat("Hooded seals \n")
+cat(paste("Total estimates of Hooded seal pups without correction: ",NHoodedGAMFinal," , SE = ",sqrt(VarTotalHoodedGAM),", CV = ",100*sqrt(VarTotalHoodedGAM)/NHoodedGAMFinal,"%\n"))
+cat(paste("Total estimates of Hooded seal pups with correction: ",NHoodedGAMCorr," , SE = ",sqrt(VarTotalHoodedGAMCorr),", CV = ",100*sqrt(VarTotalHoodedGAMCorr)/NHoodedGAMCorr,"%\n"))
+cat(paste("  * Estimate without reader correction:",NHoodedGAM," SE = ",SEHoodedGAM,", CV = ",CVHoodedGAM,"% \n"))
+cat(paste("  * Estimate with reader correction:   ",NHoodedGAMCorr," SE = ",SEHoodedGAMCorr,", CV = ",CVHoodedGAMCorr,"% \n"))
+cat("------------------------------------------------------------------------------------------------")
+
+
