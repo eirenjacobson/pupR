@@ -51,7 +51,6 @@ loadAndPrepareData <- function(survey = "WestIce2012",
     #Find the number of zero photos
     indzeroharp = which(data$HarpFinalCounts == 0)
     propzeroharp = length(indzeroharp)/length(data$HarpFinalCounts)
-    cat(paste("Proportion of zero counts for harp seals:",round(propzeroharp,digits = 2)),"\n")
 
     #Find the number of photos in each transect
     ncountsHarp = list()
@@ -81,7 +80,6 @@ loadAndPrepareData <- function(survey = "WestIce2012",
     #Find the number of zero photos
     indzerohooded = which(data$HoodedFinalCounts == 0)
     propzerohooded = length(indzerohooded)/length(data$HoodedFinalCounts)
-    cat(paste("Proportion of zero counts for hooded seals:",round(propzerohooded,digits = 2)),"\n")
 
     ncountsHooded = list()
     totalHooded = 0
@@ -95,7 +93,17 @@ loadAndPrepareData <- function(survey = "WestIce2012",
 
   }
 
-  #Find area covered of each photo
+  cat("\n Some summary statistics for the data set:")
+  cat("\n -----------------------------------------------\n")
+  cat(paste0("\n Total number of transects flown: ", length(uTrans)))
+  cat(paste0("\n Total number of photos taken: ",length(data$HarpFinalCounts),"\n"))
+  cat(paste0("\n Proportion of photos with zero counts for harp seals: ",round(propzeroharp,digits = 2)))
+  cat(paste0("\n Proportion of photos with zero counts for hooded seals: ",round(propzerohooded,digits = 2)),"\n")
+  cat(paste0("\n Total number of harp pups counted: ",totalHarps))
+  cat(paste0("\n Total number of hooded pups counted: ",totalHooded),"\n")
+  cat("\n -----------------------------------------------\n")
+
+    #Find area covered of each photo
   data$Area <- (camParamLength*data$Altitude/CamParam)*(CamParamWidth*data$Altitude/CamParam)
 
   #Find length covered of each photo (in Nautical Miles)

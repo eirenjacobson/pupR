@@ -1,0 +1,603 @@
+---
+title: "The 2019 abundance of harp seals (*Pagophilus groenlandicus*) in the Barents Sea / White Sea"
+author: "Martin Biuw, Anne Kirstine Frie, Martin Kristiansen, Michael Poltermann, Tor Arne Øigård, Tore Haug"
+date: "Draft: `r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+##  bookdown::pdf_document2:
+  bookdown::word_document2:
+    toc: no
+    reference_doc: 'WordTemplateWGHARP.dotx'
+##    latex_engine: xelatex
+
+##output: 
+##  pdf_document:
+  
+##    latex_engine: xelatex
+always_allow_html: yes
+bibliography: 'library.bib'
+csl: 'ices-journal-of-marine-science.csl'
+##biblio-style: apalike
+##biblio-style: harvard
+
+##  \usepackage{fancyhdr}
+##  \pagestyle{fancy}
+##  \rhead{WP SEA 250}
+
+header-includes: 
+  \usepackage{float}
+  \usepackage{gensymb}
+  \usepackage{circ}
+  \usepackage{caption}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval=T)
+knitr::opts_knit$set(root.dir='C:/Users/a5406/Documents/Populasjonsmodellering/rSPAMM/rSPAMM/Documents')
+```
+
+```{r runAss, message=F, cache=T, update.cache=T, warning=F, include=F}
+source('./R/inputFunctions.R')
+source('./R/run_assessment_models.R')
+source('./R/outputFunctions.R')
+source('./R/functions.R')
+source('./R/catch.options.R')
+
+data <- load.data('harpeast')
+
+massMort <- read.table('./Data/harpeast/invasion_removals.dat', sep='\t')
+massMort[which(is.na(massMort[,2])),2] <- 0
+massMort[which(is.na(massMort[,3])),3] <- 0
+data$Cdata[match(massMort[,1], data$Cdata[,1]),2] <- data$Cdata[match(massMort[,1], data$Cdata[,1]),2]+massMort[,3]
+data$Cdata[match(massMort[,1], data$Cdata[,1]),3] <- data$Cdata[match(massMort[,1], data$Cdata[,1]),3]+massMort[,2]
+parameters <- load.initial.values('harpeast')
+obj <- load.model.object(template='harps_and_hoods_population_model2')
+opt <- run.model()
+res <- model.results()
+partab <- par.table() 
+LCI <- partab$Mean - (1.96*partab$SD)
+UCI <- partab$Mean + (1.96*partab$SD)
+
+
+## Zero catch:
+datZ <- load.data('harpeast', catch_quota=c(0,0))
+objZ <- load.model.object(dat=datZ, template='harps_and_hoods_population_model2')
+optZ <- run.model(objZ)
+resZ <- model.results(datZ, objZ, optZ)
+partZ <- par.table(resZ, datZ) 
+
+
+curCatch <- apply(tail(data$Cdata, 5)[,-1], 2, mean)
+
+## Find equilibrium quota: 
+## 0% pups:
+qEq <- find.eq.quota(population='harpeast', method='Dbased')
+datEq <- load.data('harpeast', catch_quota=qEq)
+objEq <- load.model.object(dat=datEq, template='harps_and_hoods_population_model2')
+optEq <- run.model(objEq)
+resEq <- model.results(datEq, objEq, optEq)
+partEq <- par.table(resEq, datEq) 
+
+## Current pup quota:
+qEqM <- find.eq.quota(population='harpeast', method='Dbased', quota=curCatch/sum(curCatch))
+datEqM <- load.data('harpeast', catch_quota=qEqM)
+objEqM <- load.model.object(dat=datEqM, template='harps_and_hoods_population_model2')
+optEqM <- run.model(objEqM)
+resEqM <- model.results(datEqM, objEqM, optEqM)
+partEqM <- par.table(resEqM, datEqM) 
+
+
+## Find N70 quota: 
+
+## 0% pups:
+q70 <- find.N70.quota(population='harpeast', method='Dbased')
+dat70 <- load.data('harpeast', catch_quota=q70)
+obj70 <- load.model.object(dat=dat70, template='harps_and_hoods_population_model2')
+opt70 <- run.model(obj70)
+res70 <- model.results(dat70, obj70, opt70)
+part70 <- par.table(res70, dat70) 
+
+## Current pup quota:
+q70M <- find.N70.quota(population='harpeast',method='Dbased', quota=curCatch/sum(curCatch))
+dat70M <- load.data('harpeast', catch_quota=q70M)
+obj70M <- load.model.object(dat=dat70M, template='harps_and_hoods_population_model2')
+opt70M <- run.model(obj70M)
+res70M <- model.results(dat70M, obj70M, opt70M)
+part70M <- par.table(res70M, dat70M) 
+
+## PBR quotas:
+
+pbr.05 <- PBR(quota=partab[c(4,5),3]/partab[6,3])
+pbr.025 <- PBR(Fr=0.25, quota=partab[c(4,5),3]/partab[6,3])
+pbr.05.cv03 <- PBR(quota=partab[c(4,5),3]/partab[6,3], cv=0.3)
+
+## Pop model with PBR scenario 1:
+
+datpbr05 <- load.data('harpeast', catch_quota=unlist(pbr.05[c(3,4)]))
+objpbr05 <- load.model.object(dat=datpbr05, template='harps_and_hoods_population_model2')
+optpbr05 <- run.model(objpbr05)
+respbr05 <- model.results(datpbr05, objpbr05, optpbr05)
+partpbr05 <- par.table(respbr05, datpbr05) 
+
+## Pop model with PBR scenario 2:
+
+datpbr025 <- load.data('harpeast', catch_quota=unlist(pbr.025[c(3,4)]))
+objpbr025 <- load.model.object(dat=datpbr025, template='harps_and_hoods_population_model2')
+optpbr025 <- run.model(objpbr025)
+respbr025 <- model.results(datpbr025, objpbr025, optpbr025)
+partpbr025 <- par.table(respbr025, datpbr025) 
+
+## Pop model with PBR scenario 3:
+
+datpbr05cv03 <- load.data('harpeast', catch_quota=unlist(pbr.05.cv03[c(3,4)]))
+objpbr05cv03 <- load.model.object(dat=datpbr05cv03, template='harps_and_hoods_population_model2')
+optpbr05cv03 <- run.model(objpbr05cv03)
+respbr05cv03 <- model.results(datpbr05cv03, objpbr05cv03, optpbr05cv03)
+partpbr05cv03 <- par.table(respbr05cv03, datpbr05cv03) 
+
+
+## 2016 dataset:
+dat16 <- load.data('harpeast2016')
+parameters16 <- load.initial.values('harpeast2016')
+obj16 <- load.model.object(dat=dat16, template='harps_and_hoods_population_model2')
+opt16 <- run.model(obj16)
+res16 <- model.results(dat16, obj16, opt16)
+part16 <- par.table(res16, dat16) 
+
+## Find equilibrium quota for 2016 dataset: 
+## 0% pups:
+qEq16 <- find.eq.quota(population='harpeast2016', method='Dbased')
+datEq16 <- load.data('harpeast2016', catch_quota=qEq16)
+objEq16 <- load.model.object(dat=datEq16, template='harps_and_hoods_population_model2')
+optEq16 <- run.model(objEq16)
+resEq16 <- model.results(datEq16, objEq16, optEq16)
+partEq16 <- par.table(resEq16, datEq16) 
+```
+
+# ABSTRACT
+Russian aerial surveys of Barents Sea / White Sea harp seal pups during the period 1998-2013 indicate a reduction in pup production after 2003. The model currently used in the management of the Barents Sea / White Sea harp seal population is a deterministic age-structured population dynamics model and it assumes that extensive knowledge of reproduction rates are available. Due to scarcity of historical data on fecundity the current management model provides a poor fit to the pup production data for the harp seal population and the uncertainties are likely to be underestimated. The model estimates a 2019 abundance of `r format(round(partab$Mean[match('N1Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N1Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N1Current', partab$par)]), big.mark=' ')`) 1+ animals and `r format(round(partab$Mean[match('N0Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N0Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N0Current', partab$par)]), big.mark=' ')`) pups, yielding a total estimate of `r format(round(partab$Mean[match('NTotCurrent', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('NTotCurrent', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('NTotCurrent', partab$par)]), big.mark=' ')`) seals. Current catch levels indicated an increase in the 1+ population of `r round(100*(abs(1-partab$Mean[match('D1', partab$par)])))`% over the next 15 years. The equilibrium catch level was estimated to be `r format(round(qEq[2]), big.mark=' ')` seals (100% 1+ animals). If pups are hunted two pups balance one 1+ animal. The PBR removals were estimated to be `r format(pbr.05$PBR, big.mark=' ')` seals (`r round(100*pbr.05$p0/pbr.05$PBR)`% pups) using a recovery rate of Fr = 0.5. At this recovery rate the model predicts a slight population increase over the next 15 years. To be consistent with the previous assessment done in 2016, we also estimated the PBR catch level with a smaller recovery rate of Fr = 0.25. Using this recovery rate the PBR removals were estimated to be `r format(pbr.025$PBR, big.mark=' ')` (`r round(100*pbr.05$p0/pbr.05$PBR)`% pups), and the model predicted a significant population increase over the next 15 years. No conversion factor between pups and adults exists for the PBR catch level. 
+
+# INTRODUCTION
+
+Russian aerial surveys of Barents Sea / White Sea harp seal pups during the period 1998-2013 seems to indicate a reduction in pup production after 2003 [@ICES2009; -@ICES2011; -@ICES2014)]. The most likely explanation for this change seems to be a decline in the reproductive state of females [@ICES2011]. In the 2009 meeting, WGHARP concluded that the traditional NE Atlantic population model was unable to capture the sudden drop in pup production [@ICES2009]. The fit to the observed survey data was extremely poor and the predicted 2009 pup production was unrealistic in comparison to the observed pup production. The model used a constant maturity ogive over the entire time period. Considering the changes observed in reproductive rates in this population, WGHARP recommended that the existing model be modified to allow for non-constant reproductive rates. Therefore, at the 2011 meeting of WGHARP the model was modified to use all of the available data on reproductive rates and provided a reasonable fit to the 2010 pup production estimate, but was still not able to capture the dynamics of the observed pup production estimates. However, it provided a conservative estimate of the current population, and WGHARP felt that this model was adequate to be used to provide advice [@ICES2011]. 
+
+Given the difficulties in fitting the model to the survey-based pup production estimates from the Barents Sea / White Sea population, the WG recommended that different approaches to modify the model be explored to improve the fit to the data [@ICES2013]. The population model currently used in management of the Barents Sea / White Sea harp seal populations is a deterministic age-structured population dynamics model with 3 unknown parameters (pup mortality, mortality of 1 year and older seals, initial population size). The proportion of mature females that are pregnant, the fecundity rate, data is included in the model as a known quantity and no uncertainty around the measurements has been accounted for [@Øigård2014a; @ICES2013]. The low dimensional parameter space and scarce available data on fecundity makes the model stiff and unable to fit to variations in the observed data well, and the resulting confidence intervals are likely to be underestimated. @Øigård2014c have therefore suggested an improvement of the population model in order make it more flexible in capturing the dynamics of the observed pup production data. They proposed to account for the temporal variation in fecundity using a state-space approach, and assumed the fecundity to be a stochastic process that was integrated with the age-structured population dynamics of the current management model. 
+
+The new stochastic model was presented for WGHARP at the 2014 meeting and a comparison between the existing management model and the new state-space model was done. The state-space model provided a tight fit to the survey pup production estimates as it captured the sudden drop in the pup production survey estimates in 2004 and 2005, whereas the existing management model was stiff and fitted a straight line weighted slightly down towards the lower survey estimates. The WG felt that the state-space model showed some promising results and might be a step forward to modeling the population dynamics of the Barents Sea/White Sea harp seal population. However, in the current structure of this model, the model resulted in a significant increase in abundance. Considering that the most recent pup production estimate remains at a low level, the WG felt that it would be inappropriate to assume that the population will experience an increase of this magnitude and recommended the more conservative model projections provided by the existing management model to be used. This approach was applied in the most recent WGHARP meeting [@ICES2016], and is also applied here.  
+
+
+# MATERIALS & METHODS
+## Reproductive data
+The population dynamics model use historical catch records, fecundity rates, age specific proportions of mature females, and estimates of pup production to estimate the population size trajectory. The current assessment includes updated reproductive data based on sampling carried out in the Barents Sea / White Sea region in 2018. 
+
+Two types of reproductive data are used in the model: information on the proportion of females that are mature at a given age (i.e., maturity ogive) and the proportion of mature females that are pregnant at a given year (i.e. fecundity rate). Estimates of age specific proportions of mature females are available for five historical periods; 1962 - 1972, 1976 - 1985, 1988 - 1993, 2006 and 2018 [Table 1; @Frie2003; -@Frie2016; -@Frie2019; @ICES2009; -@ICES2013] . For years with no data a linear interpolation of the age specific proportions of mature females between two periods is assumed [Fig. 1; @ICES2013]. 
+ 
+The model also makes use of historical values of the fecundity rates that are obtained through sampling during commercial hunt. Barents Sea / White Sea population fecundity data are available as mean estimates in the period 1990 – 1993, and from 2006 and 2011 [Table 2; @Kjellqwist1995; @ICES2008; @Frie2016; -@Frie2019]. The population dynamics model assumes the observed fecundity as a known quantity as opposed to being part of the data to which the model is fit by maximum likelihood. For periods missing pregnancy rates, a linear transition was assumed, i.e., a linear transition from 0.84 in 1990 to 0.68 in 2006, from 0.68 in 2006 to 0.84 in 2011, and from 0.84 in 2011 to 0.86 in 2018. In the periods before 1990 the pregnancy rate was assumed constant at 0.84. As opposed to being part of the data to which the model is fit by maximum likelihood, these rates are treated as known quantities by the population dynamics model. When predicting population trends over the coming 15 years, the model by default uses the average of historical fecundity rates. When the most recent reproductive data from 2018 are included, this historical average is 0.827, which is substantially higher than the historical average calculated based on data available in 2016, which was 0.76 [@Øigård2016a; @ICES2016].  
+
+
+## Survey pup production estimates and catch history
+Pup production estimates are available from surveys conducted in 1998 – 2013 [@ICES2011; -@ICES2014]. These are found in Table 3. While a new survey was conducted in 2019, this used novel drone-based photography and only covered a limited region of the available pupping area. Furthermore, these data have not yet been comprehensively analysed, and are therefoee not included in this assessment. 
+
+Catch data come from commercial hunts and distinguish between the number of pups (0-group) and the numbers of 1 year and older animals (1+) caught per year, but contain no additional information about the age composition of the catches. Catch data prior to 1946 are unreliable and they make no distinction between pups and older seals [@Iversen1927; @Rasmussen1957; @Sergeant1991]. Because of this we start our modelling in 1946. Catch levels for the period 1946 – 2019 are presented in @ICES2016 and @Haug2019.
+
+
+## The population model
+The population model used to assess the abundance of the Barents Sea / White Sea arp seal population is identical to that used for the Greenland Sea population as well as the Greenland Sea hooded seal population and the Barents Sea / White Sea harp seal population [@Skaug2007; @ICES2016]. 
+
+
+# RESULTS
+## Population estimates
+The estimated population sizes, along with the normal priors used are presented in Table 4, and Figure 2 show the model fit to the observed pup production estimates along with the modelled total population trajectory. The model is described by only a few parameters and because of that it is very stiff. As already pointed out in the previous assessment [@Øigård2016a; @ICES2016] the model fit to the pup production estimates is poor, and not able to capture the dynamics of the survey pup production estimates. In particular, the model does not capture the aparent drop in pup production that occurred in the mid-2000s. The modelled total population indicate that the harp seal abundance in the Barents Sea/White Sea have been decreasing from 1946 to the early 1960s, and increasing from the early 1960s to early 1980s. After that the model indicates a reduction in the population size until around 2007. From 2007 to present the model indicates an increase in the population size. The modelled total population in 2019 is estimated to be about `r round(100*partab$Mean[6]/max(res$rep.matrix[res$indNTot[c(1:match(2019, res$years))]]))`% of Nmax, where Nmax is the historical maximum population size observed/estimated. Assuming annual catches at levels representing the mean catches over the last five years, the model predicts that the pup abundance will increase slightly over the next 15 years, and that the 1+ group will increase by about `r round(100*(abs(1-partab$Mean[match('D1', partab$par)])))`% (95% CI, `r round(100*(abs(1-LCI[match('D1', partab$par)])))`% - `r round(100*(abs(1-UCI[match('D1', partab$par)])))`%) over the same period. The model estimates a 2019 abundance of `r format(round(partab$Mean[match('N1Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N1Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N1Current', partab$par)]), big.mark=' ')`) 1+ animals and `r format(round(partab$Mean[match('N0Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N0Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N0Current', partab$par)]), big.mark=' ')`) pups, yielding a total estimate of `r format(round(partab$Mean[match('NTotCurrent', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('NTotCurrent', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('NTotCurrent', partab$par)]), big.mark=' ')`) seals. 
+
+As already discussed in the assessment carried out in 2016, the model estimates are stable for various choices of precision of the prior of M1+ and for various choices of initial values. Even though the priors for M0, and M1+ are relatively non-informative, increasing the mean of the prior to 0.33 and 0.11, respectively, caused a 3% change in the total population estimate. Since the population dynamics model assumes the observed fecundity as a known quantity as opposed to being part of the data to which the model is fit by maximum likelihood, the uncertainties in the observed fecundity rates are not accounted for. Because of this the uncertainty of the modelled abundance is likely to be underestimated.
+
+
+## Catch Options
+Despite the updated estimates of reproductive rates, obtained from sampling carried out in 2018, the harp seal population in the Barents Sea / White Sea should still be considered as data poor. This is due to the fact that the most recent estimates of pup production are from 2013, i.e. they are 6 years old. Similar to the previous assessment, we have therefore chosen to again consider the PBR approach for estimating catch quotas. The complete set of alternative catch options considered here were therefore:
+
+1. Current catch level (average of the catches in the period 2015 – 2019).
+2. Equilibrium catches.
+3. Catches that would reduce the population to $N_{70}$ with probability 0.8 over a 15-years period.
+4. Potential Biological Removals level given two options for maximum rate of increase (0.5 or 0.25) and also using an inflated coefficient of variance (0.3), compared to that estimated by the model (`r round(partab$SD[6]/partab$Mean[6], 2)`).
+
+When projecting future population dynamics given various quota regimes, current catch levels have normally been defined as the average catch levels of the 5 most recent years. For the most recent assessment, catch levels were set to zero for both the 0 and the 1+ group, given very low catches in the period 2012-2016 [@Øigård2016a; @ICES2016]. Commercial hunting by Norwegian vessels was resumed in the Barents Sea / White Sea area during the 2018 season, and continued into this most recent season. In this current assessment, we have therefore returned to the normal approach of using average catches over the past 5 years (Table 5). The equilibrium catch level is defined as the (fixed) annual catch level that stabilizes the future 1+ population under the estimated model. The proportion of pups in catch used was taken as the average over the past 5 years (`r round(100*apply(data$Cdata[c((nrow(data$Cdata)-4):nrow(data$Cdata)),], 2, mean)[-1]/sum(apply(data$Cdata[c((nrow(data$Cdata)-4):nrow(data$Cdata)),], 2, mean)[-1]), 1)[1]`%). For the catch option designed to reduce the population size to $N_{70}$ with probability 0.8 over a 15-years period, the catch level that has $N_{70}$ just included in the 80% confidence interval of the 15-year prediction of the total population size was estimated. The Potential Biological Removals has been defined as:
+
+$$PBR=\frac{1}{2}R_{max}F_rN_{min}$$
+where $R_{max}$ is the maximum rate of increase for the population, $F_r$ is the recovery factor with values between 0.1 and 1, and $N_{min}$ is the estimated population size using 20% percentile of the log-normal distribution. $R_{max}$ is set at a default of 0.12 for pinnipeds. Given the still unexplained drop in pup production observed beginning in 2004 and that the pup production seem to remain low we explored a recovery factor $F_r$ of 0.5 and 0.25. The PBR catch option assumes that the age structure of the removals is proportional to the age composition of the population (i.e. `r round(100*partab$Mean[4]/partab$Mean[6])`% based on the current population estimates). A catch consisting of a higher proportion of pups would be more conservative, but a multiplier to convert age 1+ animals to pups is inappropriate for the PBR removals. 
+The estimates for the various catch options using the current management model and the state-space model are given in Table 6. The equilibrium catch level is `r format(round(sum(qEq)), big.mark=' ')` seals (assuming `r round(100*qEq[2]/sum(qEq),1)`% 1+ animals, where two pups balance one 1+ animal). The PBR catch level using the current management model indicates a slight population increase of `r round(100*abs(1-partpbr05$Mean[7]))`% (95% CI; decrease of `r round(100*abs(1-(partpbr05$Mean[7]-(1.96*partpbr05$SD[7]))))`% to increase of `r round(100*abs(1-(partpbr05$Mean[7]+(1.96*partpbr05$SD[7]))))`%) for the 1+ population over the next 15 years. 
+
+# DISCUSSION
+The current model used in the management of the Barents Sea / White Sea harp seals is a deterministic age-structured population dynamics model with only 3 free parameters [@Øigård2014c]. Due to scarcity of historical data on fecundity the current management model provides a poor fit to the pup production estimates, as it is unable to capture the dynamics of the survey pup production estimates of the Barents Sea / White Sea population with the sudden drop in pup production in 2004 and 2005. The existing management model treats the available data on fecundity as known quantities with no uncertainty attached. Thus, any uncertainties associated with these measurements are not taken into account. Also, the available data on fecundity is scarce. Existing data from other populations have shown that inter-annual variability in fecundity can be substantial [@Stenson2014]. It is therefore reasonable to expect the confidence intervals from the current management model to be underestimated. For management purposes it is important that uncertainties around future predictions are realistic. 
+
+The equilibrium catch quota presented in this report (`r format(round(sum(qEqM)), big.mark=' ')`) is substantially higher that that estimated based on data available in 2016 [@Øigård2016a; @ICES2016], which was 10 090 seals. This difference is largely explained by the high fecundity rate observed in 2018 (`r data$Ftmp[match(2018, data$Cdata[,1])]`), and the resulting increase in the average fecundity rate useed for predictions. In the 2016 assessment, this historical average was 0.76, while including the 2018 estimate gives and average historical fecundity rate of `r mean(data$Ftmp[match(data$Pper[,1], data$Cdata[,1])])`. 
+
+The precision of the 2019 model estimate is fairly high with a CV of `r round(pbr.05$CV, 2)`. For reasons mentioned earlier we believe the uncertainty of the current management model is underestimated. Because of this a CV of `r round(pbr.05$CV, 2)` is likely to be too low. Increasing the CV when calculating the PBR catch level, i.e., increasing the uncertainty about the model estimate of the 2019 abundance, will lower the PBR catch quota. Increasing the CV to 0.30 resulted in an increase in the 1+ population of `r round(100*abs(1-partpbr05cv03$Mean[7]))`% (95% CI; decrease of `r round(100*abs(1-(partpbr05cv03$Mean[7]-(1.96*partpbr05cv03$SD[7]))))`% to increase of `r round(100*abs(1-(partpbr05cv03$Mean[7]+(1.96*partpbr05cv03$SD[7]))))`%) over the next 15 years. However, note that the confidence limits around these projected population changes are relatively wide. To ensure a 95% confidence in a non-negative change, the recovery rate had to be set to 0.25 (see Table 6). These results are substantially different from those presented in the most recent assessment [@Øigård2016a; @ICES2016], despite the fact that the only additional data included in this assessment are updated reproductive data from 2018, However, it should be noted that the substantial differences in projected pup productions based on 2016 data and 2019 data (see Fig. 3) can be explained by the lack of pup production estimates after 2013. In analyses carried out in 2016, these 2013 data were relatively recent, and therefore helped to constrain model estimates for the most recent period. These 2013 pup production estimates are now 6 years old, leading to a lack of constraining data during model fits. This highlights the importance of ensuring regular and timely collection of all input dsata required for the model to provide reliable population estimates.      
+
+Previous conclusions by ICES [-@ICES2011; -@ICES2013; -@ICES2014] have been that the population models used so far in the management of the Barents Sea / White Sea harp seal population have given poor fit to available data, and they were in particular unable to capture the dynamics of the survey-based pup production estimates. They may have overestimated the future fecundity and underestimated the impact of catches, and it has been recommended that different approaches to modify the model be explored to improve the fit to data. A new state-space model presented for the WG in 2014 [@ICES2014] provided an alternative that provided a better fit to data. The modelling results also documented an obvious deficiency of data from the Barents Sea / White Sea harp seal population. It demonstrated that there is a problem not having temporal overlapping observations for highly relevant variables such as reproductive rates and pup production estimates. The existing management model and the proposed state-space model predicted different population trajectories and some of the estimated catch options obtained resulted in a decline in the population over the next 15 years. This was of considerable concern for the WG who suggested that the most conservative option be chosen. Despite the poor fit of the management model to the dynamics of the pup production estimates the confidence intervals of the model overlap with the uncertainty of the pup production estimates for the four of the last five surveys, and the model estimates of pup production for these  years are not statistically significantly different (on a 5% level) from pup production estimates based on actual pup counts. As the current management model provided a reasonably good fit to the most recent pup production estimates, and had the most conservative future projections, this model was chosen for providing advice in 2014 [@ICES2014] and in 2016 [@ICES2016]. We have continued to use this model for providing advice for setting catch quotas in 2019 for the Barents Sea / White Sea harp seal population. However, we strongly suggest that further developments of the population model are undertaken, and specifically that some parameters that are now treated as observed without uncertainty (e.g. fecundity) are included as random (partially observed) effects to be fitted by the model.  
+
+# REFERENCES
+<div id="refs"></div>
+
+
+\newpage
+```{r pTab, message=FALSE, warning=FALSE}
+## Select original maturity curves:
+
+Pm <- data$Pmat[match(data$Pper$Pstart, data$Cdat[,1]),]
+Pm <- as.data.frame(Pm)[,c(2:15)]
+names(Pm) <- paste0(c(2:(length(Pm)+1)),'y')
+Pm <- cbind(Age=paste0('p', c(1:nrow(Pm))), Pm)
+Pm$Age <- as.character(Pm$Age)
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  pt <- flextable(Pm)
+  pt <- colformat_num(pt, names(Pm)[c(2:length(Pm))], big.mark='', digits=2)
+  pt <- align(pt, c(1:nrow(Pm)), c(1:length(Pm)), 'center', part='body')
+  pt <- align(pt, 1, c(1:length(Pm)), 'center', part='header')
+  pt <- add_header(pt, Age='Estimates of proportions of mature females (pi,t). The P1 estimates are from the period 1962-1972 , P2 estimates are from 1976-1985, P3 estimates are from 1988-1993, while the P4 and P5 estimates are from 2014 and 2018 respectively (ICES 2011; Frie, 2016; Frie, 2019)')
+  pt <- merge_at(pt, 1, c(1:length(Pm)), part='header')
+  pt <- border_remove(pt)
+  pt <- hline_bottom(pt, border = fp_border(style = "solid", width=2), part='body')
+  pt <- hline_bottom(pt, border = fp_border(style = "solid", width=1), part='header')
+  pt <- hline(pt, i=1, border = fp_border(style = "solid", width=2), part='header')
+  pt <- width(pt, width=0.5)
+  for(i in 1:nrow(Pm)) {
+    pt <- compose(pt, i, 1, as_paragraph(as_chunk(substr(Pm[i,1], 1, 1)), as_chunk(substr(Pm[i,1], 2, nchar(Pm[i,1])), fp_text(vertical.align = 'subscript'))))
+  }  
+  pt
+} else {
+    Pm$Age <- paste0('$', substr(Pm$Age, 1, 1), '_{', substr(Pm$Age, 2, nchar(Pm$Age)), '}$')
+  pander::pander(Pm, booktabs=T, escape=T,  caption='Estimates of proportions of mature females (pi,t). The P1 estimates are from the period 1962-1972 , P2 estimates are from 1976-1985, P3 estimates are from 1988-1993, while the P4 and P5 estimates are from 2014 and 2018 respectively (ICES 2011; Frie, 2016; Frie, 2019)')
+}
+
+```
+
+<br/><br/>
+
+```{r fTab, message=FALSE, warning=FALSE}
+## Fecundity:
+
+Fm <- read.table(paste("./Data/harpeast/fecundity.dat",sep = ""),header = FALSE)
+names(Fm) <- c('Year', 'Fecundity', 'SD')
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  Fm$Fecundity <- round(Fm$Fecundity, 2)
+  fm <- flextable(Fm)
+  fm <- colformat_num(fm, c('Fecundity', 'SD'), big.mark='', digits=2)
+  fm <- align(fm, c(1:nrow(Fm)), c(1:length(Fm)), 'center', part='body')
+  fm <- align(fm, 1, c(1:length(Fm)), 'center', part='header')
+  fm <- add_header(fm, Year='Estimates of proportion of Barents Sea / White Sea harp seal females giving birth. Data from (ICES, 2011) and (Frie, 2016, 2019).')
+  fm <- merge_at(fm, 1, c(1:length(Fm)), part='header')
+  fm <- border_remove(fm)
+  fm <- hline_bottom(fm, border = fp_border(style = "solid", width=2), part='body')
+  fm <- hline_bottom(fm, border = fp_border(style = "solid", width=1), part='header')
+  fm <- hline(fm, i=1, border = fp_border(style = "solid", width=2), part='header')
+  fm <- width(fm, width=1)
+  fm
+} else {
+  pander::pander(Fm, booktabs=T, escape=T,  caption='Estimates of proportion of Barents Sea / White Sea harp seal females giving birth. Data from (ICES, 2011) and (Frie, 2016, 2019).')
+}
+```
+
+<br/><br/>
+
+```{r pProdTab, message=FALSE, warning=FALSE}
+  require(officer)
+  pProdTab <- as.data.frame(data$pupProductionData)
+  names(pProdTab) <- c('Year', 'Estimated number of pups', 'CV')
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  pProdTab$Year <- as.integer(pProdTab$Year)
+  ft <- flextable(pProdTab)
+  ft <- colformat_num(ft, 'Year', big.mark='', digits=0)
+  ft <- colformat_num(ft, 'Estimated number of pups', big.mark=' ', digits=0)
+  ft <- add_header(ft, Year='Estimates of Barents Sea / White Sea harp seal pup production. Numbers and CVs are drawn from ICES (2011) and ICES (2014).')
+  ft <- merge_at(ft, 1, c(1:length(pProdTab)), part='header')
+  ft <- align(ft, 1, c(1:length(pProdTab)), 'left', part='header')
+  ft <- border_remove(ft)
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=2), part='body')
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ft <- width(ft, j='Estimated number of pups', width=2)
+  ft <- align(ft, c(1:nrow(pProdTab)), c(1:length(pProdTab)), 'center', part='body')
+  ft <- align(ft, 2, c(1:length(pProdTab)), 'center', part='header')
+  
+  ft
+} else {
+  pProdTab$`Estimated number of pups` <- format(pProdTab$`Estimated number of pups`, big.mark=' ', scientific=F)
+  pander::pander(pProdTab, style='rmarkdown', split.table=Inf, justify=c('left', rep('right', 2)), caption='Estimates of Barents Sea / White Sea harp seal pup production. Numbers and CVs are drawn from ICES (2011) and ICES (2014).')
+} 
+```
+
+<br/><br/>
+
+```{r parTab, message=FALSE, warning=FALSE}
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+  part <- partab
+  part <- rbind(part, tail(part70, 1))
+  part$Mean[nrow(part)] <- round(part$Mean[nrow(part)])
+  part$SD[nrow(part)] <- round(part$SD[nrow(part)])
+  part$parNames[nrow(part)] <- 'N70'
+  part <- rbind(part, tail(part70, 1))
+  part$Mean[nrow(part)] <- round(max(res$rep.matrix[res$indNTot[c(1:match(max(data$Cdata[,1]), res$years))]])*0.3)
+  part$parNames[nrow(part)] <- 'Nlim'
+  
+  part <- rbind(part, data.frame(par='Nmaximum', parNames='Nmax', Mean=max(res$rep.matrix[res$indNTot[c(1:match(2019, res$years))]]), SD=NA))
+  part <- rbind(part, data.frame(par='Nminimum', parNames='Nmin', 
+                                 Mean=pbr.05$Nmin, SD=NA))
+  
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  part$Mean <- as.character(round(part$Mean, 2))
+  part$Mean[c(1,4,5,6,8,9,10,11,12)] <- unlist(lapply(part$Mean[c(1,4,5,6,8,9,10,11,12)], function(x) unlist(strsplit(x, '.', fixed=T))[1]))
+  part$Mean[c(1,4,5,6,8,9,10,11,12)] <- format(as.numeric(part$Mean[c(1,4,5,6,8,9,10,11,12)]), big.mark=' ')
+  
+  part$SD <- as.character(round(part$SD, 2))
+  part$SD[c(1,4,5,6,8,9,10)] <- unlist(lapply(part$SD[c(1,4,5,6,8,9,10)], function(x) unlist(strsplit(x, '.', fixed=T))[1]))
+  part$SD[c(1,4,5,6,8,9,10)] <- format(as.numeric(part$SD[c(1,4,5,6,8,9,10)]), big.mark=' ')
+  part$SD[c((nrow(part)-1):nrow(part))] <- '-'
+
+  prt <- flextable(part[,-1])
+  for(i in 1:nrow(prt$body$dataset)) {
+    prt <- compose(prt, i, 1, as_paragraph(as_chunk(substr(prt$body$dataset$parNames[i], 1, 1), fp_text()), as_chunk(substr(prt$body$dataset$parNames[i], 2, nchar(prt$body$dataset$parNames[i])), fp_text(vertical.align = 'subscript'))))
+  }  
+  prt <- add_header(prt, parNames='Estimated and derived mean values and standard deviations of the parameters used in the model for Barents Sea / White Sea harp seals. Nmax is the historically largest total population, N70 is 70% of Nmax, Nlim is 30% of Nmax, and Nmin is the estimated population size using 20th percentile of the log-normal distribution.')
+prt <- merge_at(prt, 1, c(1:(length(partab)-1)), part='header')
+prt <- align(prt, 1, c(1:(length(partab)-1)), 'left', part='header')
+prt <- border_remove(prt)
+prt <- hline_bottom(prt, border = fp_border(style = "solid", width=2), part='body')
+prt <- hline_bottom(prt, border = fp_border(style = "solid", width=1), part='header')
+prt <- hline(prt, i=1, border = fp_border(style = "solid", width=2), part='header')
+prt <- compose(prt, 2, 1, as_paragraph('Parameter'), part='header')
+prt <- align(prt, 2, c(1:length(nrow(prt)$widths)), c('left', rep('center', 2)), part='header')
+prt <- align(prt, c(1:nrow(part)), 1, 'left', part='body')
+prt <- width(prt, c(1:3), 1)
+prt
+} else {
+  part$parNames <- paste0('$', substr(part$parNames, 1, 1), 
+                           '_{', substr(part$parNames, 2, nchar(part$parNames)), '}$')
+  
+    part$Mean[which(part$Mean>10)] <- round(part$Mean[which(part$Mean>10)])
+    part$Mean[which(part$Mean<10)] <- round(part$Mean[which(part$Mean<10)], 2)
+    part$Mean <- format(part$Mean, big.mark = ' ', scientific=F)
+    part$Mean <- gsub('.00', '', part$Mean, fixed=T)
+
+    part$SD[which(part$Mean>10)] <- round(part$SD[which(part$Mean>10)])
+    part$SD[which(part$Mean<10)] <- round(part$SD[which(part$Mean<10)], 2)
+    part$SD <- format(part$SD, big.mark = ' ', scientific=F)
+    part$SD <- gsub('.00', '', part$SD, fixed=T)
+rownames(part) <- c(1:nrow(part))
+names(part)[2] <- 'Parameter'
+pander::pander(part[,-1], style='rmarkdown', split.table=Inf, justify=c('left', rep('right', 2)), caption='Estimated and derived mean values and standard deviations of the parameters used in the model for Barents Sea / White Sea harp seals. Nmax is the historically largest total population, N70 is 70% of Nmax, Nlim is 30% of Nmax, and Nmin is the estimated population size using 20th percentile of the log-normal distribution.')
+} 
+
+```
+<br/><br/>
+
+```{r annCatch, eval=T, message=FALSE, warning=FALSE}
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+annCatch <- data.frame(data$Cdata[c((nrow(data$Cdata)-4):nrow(data$Cdata)),])
+annCatch <- cbind(annCatch, round(100*(annCatch[,2]/(annCatch[,2]+annCatch[,3])), 1))
+names(annCatch) <- c('Year', 'Pup catch', '1+ catch', 'Percent pups')
+annCatch$`Percent pups`[which(is.nan(annCatch$`Percent pups`))] <- NA
+annCatch <- rbind(annCatch, apply(annCatch, 2, mean, na.rm=T))
+annCatch$Year[nrow(annCatch)] <- 'Mean'
+annCatch$`Pup catch` <- round(annCatch$`Pup catch`)
+annCatch$`1+ catch` <- round(annCatch$`1+ catch`)
+annCatch$`Percent pups` <- round(annCatch$`Percent pups`, 1)
+annCatch$`Percent pups`[nrow(annCatch)] <- round(100*tail(round(annCatch$`Pup catch`), 1)/sum(annCatch[nrow(annCatch),c(2,3)]), 1)
+
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  annCatch$`Percent pups` <- paste0(annCatch$`Percent pups`, '%')
+  annCatch$`Percent pups`[grep('NA', annCatch$`Percent pups`)] <- '-'
+  annCatch$`Pup catch` <- format(annCatch$`Pup catch`, big.mark=' ')
+  annCatch$`1+ catch` <- format(annCatch$`1+ catch`, big.mark=' ')
+  cat <- flextable(annCatch)
+  cat <- add_header(cat, 'Year'='Catches of 0 and 1+ seals from the Barents Sea / White Sea harp seal population during the most recent 5 years. Data from Haug & Zabavnikov (2016, 2019)')
+  cat <- merge_at(cat, 1, c(1:length(annCatch)), part='header')
+  cat <- align(cat, 1, c(1:length(annCatch)), 'left', part='header')
+  cat <- border_remove(cat)
+  cat <- hline_bottom(cat, border = fp_border(style = "solid", width=2), part='body')
+  cat <- hline_bottom(cat, border = fp_border(style = "solid", width=1), part='header')
+  cat <- hline(cat, i=1, border = fp_border(style = "solid", width=2), part='header')
+  cat <- hline(cat, i=nrow(annCatch)-1, border = fp_border(style = "solid", width=1), part='body')
+cat <- align(cat, c(1:nrow(annCatch)), 1, 'left', part='body')
+cat <- align(cat, 2, 1, 'left', part='header')
+cat
+} else {
+  cat <- knitr::kable(annCatch, format='latex', booktabs=T, align=c('l', rep('r', length(annCatch)-1)), format.args=list(big.mark = ' '), caption='Catches of 0 and 1+ seals from the Barents Sea / White Sea harp seal population during the most recent 5 years. Data from Haug & Zabavnikov (2016, 2019)')
+  cat
+}
+```
+
+<br/><br/>
+
+```{r catchTab, eval=T, message=FALSE, warning=FALSE}
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+cOpts <- c('Current level', 'Equilibrium', 'Reduce to N70', 'PBR, Fr=0.50', 'PBR, Fr=0.25', 'PBR, Fr=0.50, CV=0.3')
+
+
+cLevs <- c(round((100*data$CQuota/sum(data$CQuota)[1]), 1)[1], rep(0, 2), rep(round(100*partab[4,3]/partab[6,3], 1), 3))
+##cLevs <- c(rep(round(100*data$CQuota/sum(data$CQuota), 1)[1], 2), rep(round(100*partab[4,3]/partab[6,3], 1), 3))
+##cLevs <- c(rep(round(100*data$CQuota/sum(data$CQuota), 1)[1], 2), 0, round(100*data$CQuota/sum(data$CQuota), 1)[1], 0)
+
+c0 <- c(data$CQuota[1], round(datEq$CQuota[1]), round(dat70$CQuota[1]), pbr.05$p0, pbr.025$p0, pbr.05.cv03$p0) 
+
+c1 <- c(data$CQuota[2], round(datEq$CQuota[2]), round(dat70$CQuota[2]), pbr.05$p1, pbr.025$p1, pbr.05.cv03$p1) 
+cTot <- c0+c1
+
+D <- round(c(partab$Mean[7], partEq$Mean[7], part70$Mean[7], 
+             partpbr05$Mean[7], partpbr025$Mean[7], partpbr05cv03$Mean[7]), 2)
+
+
+
+Dlc <- round(D-(1.96*c(partab$SD[7], partEq$SD[7], part70$SD[7],
+             partpbr05$SD[7], partpbr025$SD[7], partpbr05cv03$SD[7])), 2)
+
+Duc <- round(D+(1.96*c(partab$SD[7], partEqM$SD[7], part70$SD[7],
+             partpbr05$SD[7], partpbr025$SD[7], partpbr05cv03$SD[7])), 2)
+
+cTab <- data.frame(cOpts, cLevs, c0, c1, cTot, Dlc, D, Duc)
+names(cTab) <- c('Catch option', 'Percent pups', 'Pup catch', '1+ catch', 'Total catch', '2.5%', 'Mean', '97.5%')
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  cTab[,2] <- paste0(round(cTab[,2], 1), '%')
+  for(i in 3:5) {
+    cTab[,i] <- format(round(cTab[,i]), big.mark=' ', digits=0, scientific=F)
+  }
+  for(i in c(6:8)) {
+    cTab[,i] <- format(round(cTab[,i], 2), digits=3)
+  }
+  
+  cTab[,1] <- as.character(cTab[,1])
+  ct <- flextable(cTab)
+  ct <- compose(ct, 3, 1, as_paragraph(as_chunk(substr(ct$body$dataset[3,1], 1, 11), fp_text()), as_chunk(substr(ct$body$dataset[3,1], 12, nchar(ct$body$dataset[3,1])), fp_text(vertical.align = 'subscript'))))
+  
+  for(i in 4:nrow(ct$body$dataset)) {
+    ct <- compose(ct, i, 1, as_paragraph(as_chunk(substr(ct$body$dataset[i,1], 1, 3), fp_text()), as_chunk(substr(ct$body$dataset[i,1], 6, nchar(ct$body$dataset[i,1])), fp_text(vertical.align = 'subscript'))))
+ 
+  }
+  ct <- width(ct, 1, 1.5)  
+  ct <- width(ct, c(6:8), 0.5)
+ ## ct <- compose(ct, c(4,5),1,as_paragraph(as_chunk('Reduce to N', fp_text()), as_chunk('70', fp_text(vertical.align = 'subscript'))))
+  ct <- add_header(ct, '2.5%'='D1+')
+  ct <- compose(ct, 1,6,as_paragraph(as_chunk('D', fp_text()), as_chunk('1+', fp_text(vertical.align='subscript'))), part='header')
+  ct <- merge_at(ct, 1, c(6:8), part='header')
+  ct <- align(ct, 1, c(6:8), 'center', part='header')
+
+  ct <- add_header(ct, 'Catch option'='Catch options with relative 1+ population size (D1+) in 15-years (2035) for harp seals in the Barents Sea / White Sea.')
+  ct <- merge_at(ct, 1, c(1:(length(cTab)-1)), part='header')
+  ct <- align(ct, 1, c(1:(length(cTab)-1)), 'left', part='header')
+  ct <- border_remove(ct)
+  ct <- hline_bottom(ct, border = fp_border(style = "solid", width=2), part='body')
+  ct <- hline_bottom(ct, border = fp_border(style = "solid", width=1), part='header')
+  ct <- hline(ct, i=1, border = fp_border(style = "solid", width=2), part='header')
+ct <- hline(ct, 2, c(6:8), border = fp_border(style = "solid", width=1), part='header')
+ct <- align(ct, c(1:nrow(cTab)), 1, 'left', part='body')
+ct <- align(ct, 3, 1, 'left', part='header')
+ct <- align(ct, c(1:nrow(cTab)), c(2:length(cTab)), 'center', part='body')
+ct <- align(ct, 3, c(2:length(cTab)), 'center', part='header')
+ct
+} else {
+  cTab$`Catch option` <- as.character(cTab$`Catch option`)  
+##  cTab$`Catch option`[c(4,5)] <- 'Reduce to N70'
+  ct <- knitr::kable(cTab, format='latex', booktabs=T, align=c('l', rep('r', 7)), format.args=list(big.mark = ' '), caption='Catch options with relative 1+ population size (D1+) in 15-years (2035) for harp seals in the Barents Sea / White Sea.')
+  ct <- kableExtra::add_header_above(ct, c(' '=5, 'D1+'=3))
+  ct
+}
+```
+
+```{r plotPmat, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Proportion of mature females among Barents Sea / White Sea harp seals in four periods. Values are taken from Table 1.'}
+plot.Pmat()
+```
+
+```{r plotN, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Modelled population trajectories for Barents Sea / White Sea harp seal pups and adults (full lines), 95\\% confidence intervals (shaded areas) and future projections (dashed lines). N70, N50, and Nlim denote the 70\\%, 50\\%, and 30\\% of the historical maximum population size, respectively. Observed pup production estimates are indicated by filled circles.'}
+par(mfrow=c(1,2))
+plot.N(yLim=c(0, 25e+05))
+plot.N(component='N0', xLim=c(1990, 2035), yLim=c(0, 500000))
+```
+
+\newpage
+
+```{r annComp, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Comparison of estimated total and pup abundance trajectories based on data available in 2016 and 2019'}
+
+library(RColorBrewer)
+
+  add.alpha <- function(col, alpha=1){
+    if(missing(col))
+      stop("Please provide a vector of colours.")
+    apply(sapply(col, col2rgb)/255, 2, 
+          function(x) 
+            rgb(x[1], x[2], x[3], alpha=alpha))  
+  }
+
+df <- data.frame(Year=res$years, N0=res$rep.matrix[res$indN0,1],
+                 N1=res$rep.matrix[res$indN1,1], NTot=res$rep.matrix[res$indNTot,1],
+                 N0.SD=res$rep.matrix[res$indN0,2], N1.SD=res$rep.matrix[res$indN1,2],
+                 NTot.SD=res$rep.matrix[res$indNTot,2])
+
+df$N0.L <- df$N0-(1.96*df$N0.SD)
+df$N0.U <- df$N0+(1.96*df$N0.SD)
+df$N1.L <- df$N1-(1.96*df$N1.SD)
+df$N1.U <- df$N1+(1.96*df$N1.SD)
+df$NTot.L <- df$NTot-(1.96*df$NTot.SD)
+df$NTot.U <- df$NTot+(1.96*df$NTot.SD)
+
+df16 <- data.frame(Year=res16$years, N0=res16$rep.matrix[res16$indN0,1],
+                 N1=res16$rep.matrix[res16$indN1,1], NTot=res16$rep.matrix[res16$indNTot,1],
+                 N0.SD=res16$rep.matrix[res16$indN0,2], N1.SD=res16$rep.matrix[res16$indN1,2],
+                 NTot.SD=res16$rep.matrix[res16$indNTot,2])
+
+df16$N0.L <- df16$N0-(1.96*df16$N0.SD)
+df16$N0.U <- df16$N0+(1.96*df16$N0.SD)
+df16$N1.L <- df16$N1-(1.96*df16$N1.SD)
+df16$N1.U <- df16$N1+(1.96*df16$N1.SD)
+df16$NTot.L <- df16$NTot-(1.96*df16$NTot.SD)
+df16$NTot.U <- df16$NTot+(1.96*df16$NTot.SD)
+
+par(mfrow=c(1,2))
+plot(NTot~Year, data=df16, type='l', lwd=2, lty=2, col=brewer.pal(8, 'Dark2')[8],
+     xlab='', ylab='Total abundance', ylim=c(0, max(df16$NTot.U)),
+     xlim=c(1946, 2035), axes=F)
+axis(1)
+axis(2)
+abline(v=par('usr')[1])
+abline(h=par('usr')[3])
+
+lines(NTot~Year, data=df16[which(df16$Year<=2016),], lwd=2, col=brewer.pal(8, 'Dark2')[8])
+polygon(c(df16$Year[which(df16$Year<=2016)], rev(df16$Year[which(df16$Year<=2016)])),
+        c(df16$NTot.L[which(df16$Year<=2016)], rev(df16$NTot.U[which(df16$Year<=2016)])),
+        col=add.alpha(brewer.pal(8, 'Dark2')[8], 0.5), border=F)
+lines(NTot.L~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+lines(NTot.U~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+
+lines(NTot~Year, data=df, type='l', lwd=2, lty=2, col=brewer.pal(3, 'Dark2')[1])
+lines(NTot~Year, data=df[which(df$Year<=2019),], lwd=2, col=brewer.pal(3, 'Dark2')[1])
+polygon(c(df$Year[which(df$Year<=2019)], rev(df$Year[which(df$Year<=2019)])),
+        c(df$NTot.L[which(df$Year<=2019)], rev(df$NTot.U[which(df$Year<=2019)])),
+        col=add.alpha(brewer.pal(3, 'Dark2')[1], 0.5), border=F)
+lines(NTot.L~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[1])
+lines(NTot.U~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[1])
+legend('topleft', lwd=2, col=brewer.pal(8, 'Dark2')[c(8,1)], c('2016 dataset', '2019 dataset'), bty='n')
+
+
+plot(N0~Year, data=df16, type='l', lwd=2, lty=2, col=brewer.pal(8, 'Dark2')[8],
+     xlab='', ylab='Pup abundance', ylim=c(0, max(df16$N0.U)),
+     xlim=c(1946, 2035), axes=F)
+axis(1)
+axis(2)
+abline(v=par('usr')[1])
+abline(h=par('usr')[3])
+
+lines(N0~Year, data=df16[which(df16$Year<=2016),], lwd=2, col=brewer.pal(8, 'Dark2')[8])
+polygon(c(df16$Year[which(df16$Year<=2016)], rev(df16$Year[which(df16$Year<=2016)])),
+        c(df16$N0.L[which(df16$Year<=2016)], rev(df16$N0.U[which(df16$Year<=2016)])),
+        col=add.alpha(brewer.pal(8, 'Dark2')[8], 0.5), border=F)
+lines(N0.L~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+lines(N0.U~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+
+lines(N0~Year, data=df, type='l', lwd=2, lty=2, col=brewer.pal(3, 'Dark2')[2])
+lines(N0~Year, data=df[which(df$Year<=2019),], lwd=2, col=brewer.pal(3, 'Dark2')[2])
+polygon(c(df$Year[which(df$Year<=2019)], rev(df$Year[which(df$Year<=2019)])),
+        c(df$N0.L[which(df$Year<=2019)], rev(df$N0.U[which(df$Year<=2019)])),
+        col=add.alpha(brewer.pal(3, 'Dark2')[2], 0.5), border=F)
+lines(N0.L~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[2])
+lines(N0.U~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[2])
+
+segments(data$pupProductionData[,1], data$pupProductionData[,2]-(1.96*(data$pupProductionData[,2]*data$pupProductionData[,3])),data$pupProductionData[,1], data$pupProductionData[,2]+(1.96*(data$pupProductionData[,2]*data$pupProductionData[,3])))
+points(data$pupProductionData[,1], data$pupProductionData[,2],
+       pch=21, bg=brewer.pal(8, 'Dark2')[8])
+
+legend('topleft', lwd=2, col=brewer.pal(8, 'Dark2')[c(8,2)], c('2016 dataset', '2019 dataset'), bty='n')
+       
+```

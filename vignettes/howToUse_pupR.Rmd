@@ -78,7 +78,7 @@ The latest version of the most recent data on aerial photos of the harps and hoo
 ## Data
 All data that is described below will be loaded and used to estimate the pup abundance of the harp and hooded seals from aerial strip transect data. Having the data on a strip transect format is only required by one of the estimation methods. The others are more general and can deal with different sampling formats.
 
-The data set is divided in different parts. One part contains a file where the following information is needed in separate columns:
+The data set is divided in two parts. One part contains a file where the following information is needed in separate columns:
 
 - Reader ID
 - Photo ID
@@ -103,6 +103,7 @@ dataList = loadAndPrepareData(survey = "WestIce2012",
                                 fname = "WestIce2012.csv",
                                 population = c("harp","hood"))
 ```
+The function writes out information of the proportion of seals
 
 Next we correct the pup counts for readers error using the `correctReading` function, i.e., 
 
@@ -119,20 +120,28 @@ In this section we will show how to estimate the number of pups based on the pup
 We first present a method developed by Kingsley (ref). This method requires that the data is on a strip transect format. We use the `kingsley` function to estimate the pup abundance and we often estimate the pup abundance based on both the uncorrected pup counts and the corrected pup counts.
 
 ```{r eval=TRUE}
+# The harp seal population
 #Estimate the number of pups using the uncorrected pup counts
 EstHarp = kingsley(dataList$xycord$x,
                    dataList$data$HarpFinalCounts,
                    dataList$data$Area,
                    dataList$data$Transect)
 
+#Estimate the number of pups using readers corrected pup counts
+EstHarpCorr = kingsley(correctedList$xycord$x,
+                       correctedList$data$CountsHarpCorr,
+                       correctedList$data$Area,
+                       correctedList$data$Transect)
+
+# The hooded seal population
+#Estimate the number of pups using the uncorrected pup counts
 EstHooded = kingsley(dataList$xycord$x,
                      dataList$data$HoodedFinalCounts,
                      dataList$data$Area,
                      dataList$data$Transect)
 
-#Estimate number of pups using reader corrected pup counts
 
-
+#Estimate the number of pups using readers corrected pup counts
 EstHoodedCorr = kingsley(correctedList$xycord$x,
                          correctedList$data$CountsHoodedCorr,
                          correctedList$data$Area,
@@ -197,7 +206,7 @@ EstGAMCorr = GAMestimate(harpcounts =
 
 We could do the same, but with a Poisson distribution and then check the goodnes-off-fit for the different models. If you do that it will show that the Negative Binomial distribution is a better model due to over-dispersion.
 
-The total uncertainty estimate of the pup abundance using GAMs' using corrected pup counts is:
+The total uncertainty estimate of the pup abundance using GAMs using corrected pup counts is:
 
 ```{r eval=TRUE}
 VarHarpGAMCorr = EstGAMCorr$SEHarpGAM^2+correctedList$VmeasHarp
@@ -205,588 +214,608 @@ VarHoodedGAMCorr = EstGAMCorr$SEHoodedGAM^2+correctedList$VmeasHooded
 ```
 
 
-## Correction factor
+## Estimating the birth distribution - the correction factor
 
 In this section we will see how you can estimate the correction factor to correct for pups which have not been born yet or pups that have left the ice. The correction factor is estimated from a different data set than the aerial photos. The data needed is staging data. This is obtained by flying over the whelping patch for a period of time and count the number of pups in various pre-defined age/growt stages with known length. This applies for both populations, but each population are divided in different stage classes and the length of the various stages are different. After the pups reach a certain mature stage it is assumed that the pup leaves the ice, and is thus unavailable for counting if the aerial photo survey are carried out after the pups have left the ice. Based on this data and the known length of the various stages one can estimate the date of the peak of the whelping season and through a model developed by (ref) one can estimate the number of pups on the ice at any date in the whelping season. 
+As we now have estimated the birth distribution and obtained the correction factor for the date when the aerial survey was carried out we can obtain a pup abundance estimated adusted for pups that have not been born yet and pups that have left the ice. Earlier we found a total uncertainty of the estimated pup abundance (not adjusted for missing seals) when using the readers corrected pup counts by combining the uncertainty in the estimation procedure and the uncertainty of the readers correction. We need to do the same for the final pup abundance estimate which adjusts for missing seals based on the readers corrected data. 
 
+We have combined all the estimates in a list:
 
+```{r eval=TRUE}
+QHarp = 0.99          # Correction factor for harp seals
+SEQHarp = 0.00014     # Uncertainty of the harp seal correction factor
+QHooded = 0.82        # Correction factor for harp seals
+SEQHooded = 0.0134    # Uncertainty of the harp seal correction factor
 
-
-QHarp = 0.99
-SEQHarp = 0.00014
-QHooded = 0.82
-SEQHooded = 0.0134
-
+# Correcting for missing seals
 estimates = list()
+
+# Harp seal population
+# Estimated pup abundance based on raw pup counts
 estimates$EstHarpFinal = EstHarp$N/QHarp
+
+# Estimated pup abundance based on readers corrected pup counts
 estimates$EstHarpFinalCorr = EstHarpCorr$N/QHarp
+
+#---------------------------------------------------
+
+# Hooded seal population
+# Estimated pup abundance based on raw pup counts
 estimates$EstHoodedFinal = EstHooded$N/QHooded
+
+# Estimated pup abundance based on readers corrected pup counts
 estimates$EstHoodedFinalCorr = EstHoodedCorr$N/QHooded
 
+# Calculating the total uncertainty 
 estimates$VarTotalHarp = (1/QHarp)^2*EstHarp$SE^2+(EstHarp$N/QHarp^2)*SEQHarp^2
 estimates$VarTotalHooded = (1/QHooded)^2*EstHooded$SE^2+(EstHooded$N/QHooded^2)*SEQHooded^2
 estimates$VarTotalHarpCorr = (1/QHarp)^2*VarHarpCorr+(EstHarpCorr$N/QHarp^2)*SEQHarp^2
 estimates$VarTotalHoodedCorr = (1/QHooded)^2*VarHoodedCorr+(EstHoodedCorr$N/QHooded^2)*SEQHooded^2
+```
 
+In summary we now have both uncorrected and readers corrected pup counts (for both populations), we have pup abundance estimates (both populations, and based on both corrected and uncorrected pup counts), we got a correction factor for pups not born yet and pups that have already left the ice, and we got a total uncertainty in the final pup abundance estimate (based on the uncertainty of the readers corrections and the uncertainty of the correction factor from the birth distribution). 
+
+With the list we can print out the final results to the screen:
+```{r eval=TRUE}
 #Print pup production estimates based on the Kingsley method to screen
 printKingsley2screen(estimates)
-
-## Old stuff beyond this point. Not relevant. 
-
-### Catch data
-Catch data are found in the file *catch_data.dat* and the content of the file looks like this:
-
-    ##     V1     V2    V3
-    ## 1 1946 105631 64742
-    ## 2 1947 105631 64742
-    ## 3 1948 105631 64742
-    ## 4 1949 105631 64742
-    ## 5 1950 105631 64742
-    ## 6 1951  67793 76448
-
-The first column contains the year, the seccond column contains the catch of pups, and the third column contains the catch of the 1+ population.
-
-### Pup production estimates
-Estimated pup production is found in the file *pup_production.dat*. The content of the file looks like this: 
-
-    ##      V1     V2    V3
-    ## 1  1998 286260 0.150
-    ## 2  2000 322474 0.098
-    ## 3  2000 339710 0.105
-    ## 4  2002 330000 0.103
-    ## 5  2003 328000 0.181
-    ## 6  2004 231811 0.190
-    ## 7  2004 234000 0.205
-    ## 8  2005 122658 0.162
-    ## 9  2008 123104 0.199
-    ## 10 2009 157000 0.108
-    ## 11 2010 163032 0.198
-    ## 12 2013 128786 0.237
-
-In the first column you see the survey year, in the seccond column you see the estimated pup production, and in the third the estimated CV of that survey is given.
-
-### Fecundity data
-Fecundity data is found in the *fecundity.dat* file. The content of the file looks like this:
-
-    ##     V1   V2   V3
-    ## 1 1990 0.84 0.06
-    ## 2 1991 0.84 0.06
-    ## 3 1992 0.84 0.06
-    ## 4 1993 0.84 0.06
-    ## 5 2006 0.68 0.06
-    ## 6 2011 0.84 0.06
-    ## 7 2018 0.91 0.03
-
-In the first column you have the year for when the fecundity is estimated, in the seccond column you have the estimated fecundity, and in the thirst column you have the estimated standard error of the fecundity estimate.
-
-### Birth ogive
-In the files *wgharp.ogi* and *wgharp.ogp* you find the birth ogive data, and the from which time periods the birth ogive curves applies for. The content of the *wgharp.ogi* looks like
-
-    ##    Age   P1   P2   P3   P4   P5
-    ## 1    1 0.00 0.00 0.00 0.00 0.00
-    ## 2    2 0.00 0.00 0.00 0.01 0.00
-    ## 3    3 0.01 0.00 0.00 0.02 0.00
-    ## 4    4 0.17 0.00 0.02 0.05 0.00
-    ## 5    5 0.64 0.24 0.08 0.11 0.00
-    ## 6    6 0.90 0.62 0.21 0.25 0.52
-    ## 7    7 0.98 0.81 0.40 0.55 0.77
-    ## 8    8 0.99 0.91 0.59 0.90 0.89
-    ## 9    9 1.00 0.95 0.75 0.99 0.95
-    ## 10  10 1.00 0.98 0.85 1.00 0.97
-    ## 11  11 1.00 0.99 0.91 1.00 0.99
-    ## 12  12 1.00 0.99 0.95 1.00 0.99
-    ## 13  13 1.00 1.00 0.97 1.00 0.99
-    ## 14  14 1.00 1.00 0.98 1.00 1.00
-    ## 15  15 1.00 1.00 0.99 1.00 1.00
-    ## 16  16 1.00 1.00 1.00 1.00 1.00
-    ## 17  17 1.00 1.00 1.00 1.00 1.00
-    ## 18  18 1.00 1.00 1.00 1.00 1.00
-    ## 19  19 1.00 1.00 1.00 1.00 1.00
-    ## 20  20 1.00 1.00 1.00 1.00 1.00
-
-In the first column the age group is listed and in the following columns a birth ogive curve is listed for a given period. Every time a new birth ogive estimated is available, a new column is added. The content of the *wgharp.ogp* looks like 
-
-    ##   Pstart Pstop
-    ## 1   1962  1972
-    ## 2   1976  1985
-    ## 3   1988  1993
-    ## 4   2006  2006
-    ## 5   2018  2018
-
-The first column denotes the start of the time period a given birth ogive curve applies for, and the second column denotes the end of the time period the birth ogive curve is valid. The reason for this is that usually data for several years are pooled together when estimating the birth ogive curve in order to ensure enough data to obtain a reasonable estimated of the birth ogive. Note that the number of rows in the *wgharp.ogp* file corresponds to the number of columns in the *wgharp.ogi* file (minus 1 since one column represents the age group).
-
-### Priors used
-Priors used for the various parameters are specified in the *priors.dat* file. The content of the file looks like this:
-
-    ##        V1    V2
-    ## 1 1.0e+06 2e+05
-    ## 2 9.0e-02 5e-02
-    ## 3 2.7e-01 5e-02
-
-Each row specify mean and the standard deviation of a Gaussian prior used for a given parameter. In the first colum the mean value is found and in the second column the standard deviation is found. In the first row the prior distribution of the initial population size $K$ is specified, in the seccond row the prior distribution of the 1+ mortality $M$ is specified, and in the third row the prior distribution of the pup mortality $M_0$ is specified.
-
-
-## Loading the full data set
-In order to load the data you have to specify which population you want to load the data for. The various alternatives are `harpeast`, `harpwest`, and `hooded` (which is the hooded seal population in the West Ice - the ice along the east coast of Greenland). In the examples that follows we will use the `harpeast` population. 
-
-To load the data used you run the following function:
-```{r eval=FALSE}
-data <- load.data(population = "harpeast")
 ```
 
-```{r echo=FALSE}
-data = harpeast$data
-parameters = harpeast$parameters
-```
+<!-- ### Catch data -->
+<!-- Catch data are found in the file *catch_data.dat* and the content of the file looks like this: -->
+
+<!--     ##     V1     V2    V3 -->
+<!--     ## 1 1946 105631 64742 -->
+<!--     ## 2 1947 105631 64742 -->
+<!--     ## 3 1948 105631 64742 -->
+<!--     ## 4 1949 105631 64742 -->
+<!--     ## 5 1950 105631 64742 -->
+<!--     ## 6 1951  67793 76448 -->
+
+<!-- The first column contains the year, the seccond column contains the catch of pups, and the third column contains the catch of the 1+ population. -->
+
+<!-- ### Pup production estimates -->
+<!-- Estimated pup production is found in the file *pup_production.dat*. The content of the file looks like this:  -->
+
+<!--     ##      V1     V2    V3 -->
+<!--     ## 1  1998 286260 0.150 -->
+<!--     ## 2  2000 322474 0.098 -->
+<!--     ## 3  2000 339710 0.105 -->
+<!--     ## 4  2002 330000 0.103 -->
+<!--     ## 5  2003 328000 0.181 -->
+<!--     ## 6  2004 231811 0.190 -->
+<!--     ## 7  2004 234000 0.205 -->
+<!--     ## 8  2005 122658 0.162 -->
+<!--     ## 9  2008 123104 0.199 -->
+<!--     ## 10 2009 157000 0.108 -->
+<!--     ## 11 2010 163032 0.198 -->
+<!--     ## 12 2013 128786 0.237 -->
+
+<!-- In the first column you see the survey year, in the seccond column you see the estimated pup production, and in the third the estimated CV of that survey is given. -->
+
+<!-- ### Fecundity data -->
+<!-- Fecundity data is found in the *fecundity.dat* file. The content of the file looks like this: -->
+
+<!--     ##     V1   V2   V3 -->
+<!--     ## 1 1990 0.84 0.06 -->
+<!--     ## 2 1991 0.84 0.06 -->
+<!--     ## 3 1992 0.84 0.06 -->
+<!--     ## 4 1993 0.84 0.06 -->
+<!--     ## 5 2006 0.68 0.06 -->
+<!--     ## 6 2011 0.84 0.06 -->
+<!--     ## 7 2018 0.91 0.03 -->
+
+<!-- In the first column you have the year for when the fecundity is estimated, in the seccond column you have the estimated fecundity, and in the thirst column you have the estimated standard error of the fecundity estimate. -->
+
+<!-- ### Birth ogive -->
+<!-- In the files *wgharp.ogi* and *wgharp.ogp* you find the birth ogive data, and the from which time periods the birth ogive curves applies for. The content of the *wgharp.ogi* looks like -->
+
+<!--     ##    Age   P1   P2   P3   P4   P5 -->
+<!--     ## 1    1 0.00 0.00 0.00 0.00 0.00 -->
+<!--     ## 2    2 0.00 0.00 0.00 0.01 0.00 -->
+<!--     ## 3    3 0.01 0.00 0.00 0.02 0.00 -->
+<!--     ## 4    4 0.17 0.00 0.02 0.05 0.00 -->
+<!--     ## 5    5 0.64 0.24 0.08 0.11 0.00 -->
+<!--     ## 6    6 0.90 0.62 0.21 0.25 0.52 -->
+<!--     ## 7    7 0.98 0.81 0.40 0.55 0.77 -->
+<!--     ## 8    8 0.99 0.91 0.59 0.90 0.89 -->
+<!--     ## 9    9 1.00 0.95 0.75 0.99 0.95 -->
+<!--     ## 10  10 1.00 0.98 0.85 1.00 0.97 -->
+<!--     ## 11  11 1.00 0.99 0.91 1.00 0.99 -->
+<!--     ## 12  12 1.00 0.99 0.95 1.00 0.99 -->
+<!--     ## 13  13 1.00 1.00 0.97 1.00 0.99 -->
+<!--     ## 14  14 1.00 1.00 0.98 1.00 1.00 -->
+<!--     ## 15  15 1.00 1.00 0.99 1.00 1.00 -->
+<!--     ## 16  16 1.00 1.00 1.00 1.00 1.00 -->
+<!--     ## 17  17 1.00 1.00 1.00 1.00 1.00 -->
+<!--     ## 18  18 1.00 1.00 1.00 1.00 1.00 -->
+<!--     ## 19  19 1.00 1.00 1.00 1.00 1.00 -->
+<!--     ## 20  20 1.00 1.00 1.00 1.00 1.00 -->
+
+<!-- In the first column the age group is listed and in the following columns a birth ogive curve is listed for a given period. Every time a new birth ogive estimated is available, a new column is added. The content of the *wgharp.ogp* looks like  -->
+
+<!--     ##   Pstart Pstop -->
+<!--     ## 1   1962  1972 -->
+<!--     ## 2   1976  1985 -->
+<!--     ## 3   1988  1993 -->
+<!--     ## 4   2006  2006 -->
+<!--     ## 5   2018  2018 -->
 
-To explore the data object you can
-```{r}
-names(data)
-```
+<!-- The first column denotes the start of the time period a given birth ogive curve applies for, and the second column denotes the end of the time period the birth ogive curve is valid. The reason for this is that usually data for several years are pooled together when estimating the birth ogive curve in order to ensure enough data to obtain a reasonable estimated of the birth ogive. Note that the number of rows in the *wgharp.ogp* file corresponds to the number of columns in the *wgharp.ogi* file (minus 1 since one column represents the age group). -->
 
-The data object is a list and you can further explore the actual values used by e.g.,
-```{r}
-data$Amax
+<!-- ### Priors used -->
+<!-- Priors used for the various parameters are specified in the *priors.dat* file. The content of the file looks like this: -->
 
-data$pupProductionData
+<!--     ##        V1    V2 -->
+<!--     ## 1 1.0e+06 2e+05 -->
+<!--     ## 2 9.0e-02 5e-02 -->
+<!--     ## 3 2.7e-01 5e-02 -->
 
-```
+<!-- Each row specify mean and the standard deviation of a Gaussian prior used for a given parameter. In the first colum the mean value is found and in the second column the standard deviation is found. In the first row the prior distribution of the initial population size $K$ is specified, in the seccond row the prior distribution of the 1+ mortality $M$ is specified, and in the third row the prior distribution of the pup mortality $M_0$ is specified. -->
 
-# Parameters to be estimed and how to load them
-As briefly mentioned earlier the population dynamics model is described by three parameters. The initial population size $K$, the mortality of the 1+ population $M$, and the pup mortality $M_0$. The initial population size is the population size for the year the model is fit from, and this is determined by the availability of the catch data. The earliest catch data is from 1946, so the model is fit from 1946 and up to present. It also predicts the population dynamics into the future, and this is default set to 15 years. 
 
-To load the initial values of the parameters to be estimated run:
-```{r eval=FALSE}
-parameters <- load.initial.values(population = "harpeast")
-```
-The parameters object is also a list and the content looks like this for the `harpeast` population
-```{r}
-parameters
-```
-Here `logK` is the log transformed initial population size, `M0tilde` is the logit transformed pup mortality, and `Mtilde` is the logit transformed 1+ mortality (seals of age 1 and greater). The reason that transformed parameters are estimated instead of the non transformed parameters is that the log transformation of the initial population ensures that the model provides a stricktly positive estimate of the initial population. The logit tranformation of the mortalities ensures that the estimates are bounded between 0 and 1. 
+<!-- ## Loading the full data set -->
+<!-- In order to load the data you have to specify which population you want to load the data for. The various alternatives are `harpeast`, `harpwest`, and `hooded` (which is the hooded seal population in the West Ice - the ice along the east coast of Greenland). In the examples that follows we will use the `harpeast` population.  -->
 
-# Model fitting and obtaining estimates
-The model is implemented in the Template Model Builder framework and makes use of the `TMB` R package. This means that the code for model is written in C++ and will be compiled when you install the `rSPAMM` package. When installing the `rSPAMM` package the `TMB` package and all dependencies should also be installed automatically.
+<!-- To load the data used you run the following function: -->
+<!-- ```{r eval=FALSE} -->
+<!-- data <- load.data(population = "harpeast") -->
+<!-- ``` -->
 
-## Fitting the population dynamics model
-The optimization routine used is `nlminb`. 
-To fit the model run:
+<!-- ```{r echo=FALSE} -->
+<!-- data = harpeast$data -->
+<!-- parameters = harpeast$parameters -->
+<!-- ``` -->
 
-```{r}
-optobj <- run.model(data = data, par = parameters)
-```
+<!-- To explore the data object you can -->
+<!-- ```{r} -->
+<!-- names(data) -->
+<!-- ``` -->
 
-When the model is fitted some key information will be written to screen. This key information show whether the model converged, what type of convergence and estimates of the parameters that describes the modelled population dynamics.
+<!-- The data object is a list and you can further explore the actual values used by e.g., -->
+<!-- ```{r} -->
+<!-- data$Amax -->
 
-The `run.model` function returns a list containing the model object `obj` and the final optimized opject `opt`.
+<!-- data$pupProductionData -->
 
-## Obtaining the estimated quantities
-In addition to the estimated parameters needed to describe the modelled population dynamics of a population the model fit also provides the user with other relevant quantities. The Table below lists the various quantities obtained.
+<!-- ``` -->
 
-----------------------------------------------------
-Variable name           Description
------------------       ----------------------------
-rep                     Check it out
+<!-- # Parameters to be estimed and how to load them -->
+<!-- As briefly mentioned earlier the population dynamics model is described by three parameters. The initial population size $K$, the mortality of the 1+ population $M$, and the pup mortality $M_0$. The initial population size is the population size for the year the model is fit from, and this is determined by the availability of the catch data. The earliest catch data is from 1946, so the model is fit from 1946 and up to present. It also predicts the population dynamics into the future, and this is default set to 15 years.  -->
 
-rep.matrix              Check
+<!-- To load the initial values of the parameters to be estimated run: -->
+<!-- ```{r eval=FALSE} -->
+<!-- parameters <- load.initial.values(population = "harpeast") -->
+<!-- ``` -->
+<!-- The parameters object is also a list and the content looks like this for the `harpeast` population -->
+<!-- ```{r} -->
+<!-- parameters -->
+<!-- ``` -->
+<!-- Here `logK` is the log transformed initial population size, `M0tilde` is the logit transformed pup mortality, and `Mtilde` is the logit transformed 1+ mortality (seals of age 1 and greater). The reason that transformed parameters are estimated instead of the non transformed parameters is that the log transformation of the initial population ensures that the model provides a stricktly positive estimate of the initial population. The logit tranformation of the mortalities ensures that the estimates are bounded between 0 and 1.  -->
 
-rep.names               check
+<!-- # Model fitting and obtaining estimates -->
+<!-- The model is implemented in the Template Model Builder framework and makes use of the `TMB` R package. This means that the code for model is written in C++ and will be compiled when you install the `rSPAMM` package. When installing the `rSPAMM` package the `TMB` package and all dependencies should also be installed automatically. -->
 
-indN0                   Indexes of where the fitted pup population is found in the
-                        rep.matrix
-                     
-indN1                   Indexes for the modelled 1+ population
+<!-- ## Fitting the population dynamics model -->
+<!-- The optimization routine used is `nlminb`.  -->
+<!-- To fit the model run: -->
 
-indNtot                 Indexes for  the total population
+<!-- ```{r} -->
+<!-- optobj <- run.model(data = data, par = parameters) -->
+<!-- ``` -->
 
-indD1                   Index for the estimated of D 
+<!-- When the model is fitted some key information will be written to screen. This key information show whether the model converged, what type of convergence and estimates of the parameters that describes the modelled population dynamics. -->
 
-indD1new                Index for the estimated D1new
+<!-- The `run.model` function returns a list containing the model object `obj` and the final optimized opject `opt`. -->
 
-indN0Current            Index for the modelled pup abundance in the current year
+<!-- ## Obtaining the estimated quantities -->
+<!-- In addition to the estimated parameters needed to describe the modelled population dynamics of a population the model fit also provides the user with other relevant quantities. The Table below lists the various quantities obtained. -->
 
-indN1Current            Index for the modelled 1+ abundance in the current year
+<!-- ---------------------------------------------------- -->
+<!-- Variable name           Description -->
+<!-- -----------------       ---------------------------- -->
+<!-- rep                     Check it out -->
 
-indNtotCurrent          Index for the modelled total population in the current year                     
+<!-- rep.matrix              Check -->
 
-years                   The years the model is fitted for
+<!-- rep.names               check -->
 
-Kest                    Estimated initial population size
+<!-- indN0                   Indexes of where the fitted pup population is found in the -->
+<!--                         rep.matrix -->
 
-Kest.sd                 Standard deviation of the initial population size
+<!-- indN1                   Indexes for the modelled 1+ population -->
 
-Mest                    Estimated 1+ mortality
+<!-- indNtot                 Indexes for  the total population -->
 
-Mest.sd                 Standard deviation of the 1+ mortality
+<!-- indD1                   Index for the estimated of D  -->
 
-M0est                   Estimated pup mortality
+<!-- indD1new                Index for the estimated D1new -->
 
-M0est.sd                Standard deviation of the estimated pup mortality
+<!-- indN0Current            Index for the modelled pup abundance in the current year -->
 
-D1                      Estimated depletion coefficient
+<!-- indN1Current            Index for the modelled 1+ abundance in the current year -->
 
-DNmax                   Estimated of depletion coefficient using Nmax and Npred
+<!-- indNtotCurrent          Index for the modelled total population in the current year                      -->
 
-N0Current               Estimated pup abundance for the current year
+<!-- years                   The years the model is fitted for -->
 
-N1Current               Estimated 1+ abundance for the current year
+<!-- Kest                    Estimated initial population size -->
 
-NTotCurrent             Estimated total abundance for the current year
+<!-- Kest.sd                 Standard deviation of the initial population size -->
 
-D1.sd                   Standard deviation of estimated D
+<!-- Mest                    Estimated 1+ mortality -->
 
-DNmax.sd                Standard deviation of estimated D using Nmax and Npred
+<!-- Mest.sd                 Standard deviation of the 1+ mortality -->
 
-N0Current               Standard deviation of current pup abundance
+<!-- M0est                   Estimated pup mortality -->
 
-N1Current               Standard deviation of current 1+ abundanceI
+<!-- M0est.sd                Standard deviation of the estimated pup mortality -->
 
-NTotCurrent             Standard deviation of current total abundance
--------------------------------------------------
+<!-- D1                      Estimated depletion coefficient -->
 
-The model results can be obtained by running:
-```{r}
-res <- model.results(data = data,optobject = optobj)
-```
-The `res` object is a list containing all the estimates of the quantities listed in the Table above.
+<!-- DNmax                   Estimated of depletion coefficient using Nmax and Npred -->
 
-```{r}
-names(res)
-```
+<!-- N0Current               Estimated pup abundance for the current year -->
 
-A table for the most interesting quantities needed can be made by running:
-```{r}
-partab <- par.table(results=res, dat=data) 
+<!-- N1Current               Estimated 1+ abundance for the current year -->
 
-partab 
-```
+<!-- NTotCurrent             Estimated total abundance for the current year -->
 
-# Visualize the modelled population dynamics
-In this section we will show how to create graphics to present the various output of the modelling results. To display the modelled pup abundance and the 1+ abundance you run the following function:
-```{r}
-plotRes(res,data)
-```
+<!-- D1.sd                   Standard deviation of estimated D -->
 
-***
+<!-- DNmax.sd                Standard deviation of estimated D using Nmax and Npred -->
 
-**In order to open an OS independent graphical devise use the option `grDev = TRUE`, i.e,**
-```{r eval = FALSE}
-plotRes(res,data,grDev = TRUE)
-```
+<!-- N0Current               Standard deviation of current pup abundance -->
 
-***
+<!-- N1Current               Standard deviation of current 1+ abundanceI -->
 
+<!-- NTotCurrent             Standard deviation of current total abundance -->
+<!-- ------------------------------------------------- -->
 
-<!-- ![Modelled pup abundance and 1+ abundance.](figures/fitted_N0_N1_with_projections.png){ width=98%} -->
+<!-- The model results can be obtained by running: -->
+<!-- ```{r} -->
+<!-- res <- model.results(data = data,optobject = optobj) -->
+<!-- ``` -->
+<!-- The `res` object is a list containing all the estimates of the quantities listed in the Table above. -->
 
+<!-- ```{r} -->
+<!-- names(res) -->
+<!-- ``` -->
 
-You can also plot the fit to the pup abundance and the 1+ abundance separately by specifying that in the `component` option:
-```{r}
-plotRes(res,data,component = c("N0"))
-```
+<!-- A table for the most interesting quantities needed can be made by running: -->
+<!-- ```{r} -->
+<!-- partab <- par.table(results=res, dat=data)  -->
 
-***
-<!-- ![Modelled pup abundance.](figures/fitted_pup_abundance.png){ width=98%} -->
+<!-- partab  -->
+<!-- ``` -->
 
-```{r}
-plotRes(res,data,component = c("N1"))
-```
+<!-- # Visualize the modelled population dynamics -->
+<!-- In this section we will show how to create graphics to present the various output of the modelling results. To display the modelled pup abundance and the 1+ abundance you run the following function: -->
+<!-- ```{r} -->
+<!-- plotRes(res,data) -->
+<!-- ``` -->
 
-***
-<!-- ![Modelled abundance.](figures/fitted_adult_abun.png){ width=98%} -->
+<!-- *** -->
 
-You can also choose to not plot the future projections by setting `projections = FALSE` . 
-```{r}
-plotRes(res,data,projections = FALSE)
-```
+<!-- **In order to open an OS independent graphical devise use the option `grDev = TRUE`, i.e,** -->
+<!-- ```{r eval = FALSE} -->
+<!-- plotRes(res,data,grDev = TRUE) -->
+<!-- ``` -->
 
-***
-<!-- ![Modelled pup and 1+ abundance  withouth projections.](figures/fitted_abun_no_proj.png){ width=98%} -->
+<!-- *** -->
 
-The confidence intervals can be turned off by setting `conf.int = FALSE` and the horizontal lines for $N_{lim}$, $N_{50}$ and $N_{70}$ can be turned off by setting `plot.Nlims = FALSE`. For other options you can run `?plotRes`.
 
-If you want to visualize certain types of data you can plot the historical catch level used, the fecundity vector and the birth ogive curves for each time period. To plot the catch data run the `plotCatch()` function:
-```{r eval = FALSE}
-plotCatch(catch = data$Cdata)
-```
-![Reported catch levels of pups and 1+ animals with bars next to each other.](figures/catch_data_dodge_new.png){ width=98%}
+<!-- <!-- ![Modelled pup abundance and 1+ abundance.](figures/fitted_N0_N1_with_projections.png){ width=98%} --> -->
 
 
-***
+<!-- You can also plot the fit to the pup abundance and the 1+ abundance separately by specifying that in the `component` option: -->
+<!-- ```{r} -->
+<!-- plotRes(res,data,component = c("N0")) -->
+<!-- ``` -->
 
-Default the bars are next to each other, but the bars can be plotted on top of each other by setting `position = "stack"`:
-```{r eval = FALSE}
-plotCatch(catch = data$Cdata,position = "stack")
-```
+<!-- *** -->
+<!-- <!-- ![Modelled pup abundance.](figures/fitted_pup_abundance.png){ width=98%} --> -->
 
-![Reported catch levels of pups and 1+ animals with bars on top of each other.](figures/catch_data_stack_new.png){ width=98%}
+<!-- ```{r} -->
+<!-- plotRes(res,data,component = c("N1")) -->
+<!-- ``` -->
 
-***
+<!-- *** -->
+<!-- <!-- ![Modelled abundance.](figures/fitted_adult_abun.png){ width=98%} --> -->
 
-You can plot the modelled population dynamics and the reported catch in the same figure using `plotResCatch()`
+<!-- You can also choose to not plot the future projections by setting `projections = FALSE` .  -->
+<!-- ```{r} -->
+<!-- plotRes(res,data,projections = FALSE) -->
+<!-- ``` -->
 
-```{r eval = FALSE}
-plotResCatch(res,data)
-```
-![Reported catch levels of pups and 1+ animals with bars next to each other.](figures/plotResCatch.png){ width=98%}
+<!-- *** -->
+<!-- <!-- ![Modelled pup and 1+ abundance  withouth projections.](figures/fitted_abun_no_proj.png){ width=98%} --> -->
 
-***
+<!-- The confidence intervals can be turned off by setting `conf.int = FALSE` and the horizontal lines for $N_{lim}$, $N_{50}$ and $N_{70}$ can be turned off by setting `plot.Nlims = FALSE`. For other options you can run `?plotRes`. -->
 
-If you want to explore the birth ogive data used for various periods you can run the `plotOgive()` function:
-```{r fig.height=4}
-plotOgive(dat = data)
-```
+<!-- If you want to visualize certain types of data you can plot the historical catch level used, the fecundity vector and the birth ogive curves for each time period. To plot the catch data run the `plotCatch()` function: -->
+<!-- ```{r eval = FALSE} -->
+<!-- plotCatch(catch = data$Cdata) -->
+<!-- ``` -->
+<!-- ![Reported catch levels of pups and 1+ animals with bars next to each other.](figures/catch_data_dodge_new.png){ width=98%} -->
 
-***
 
-<!-- ![Birth ogive for different periods.](figures/birth_ogive.png){ width=98%} -->
+<!-- *** -->
 
-Since fecundity rates is not available for all years they are interpolated between missing years. You can plot the fecundity rates used in the modelling by running `plotFecundity()`. Default it plots both the linear interpolated fecundity rates and the observed fecundity ratesfor a given population.
-```{r fig.height=4}
-plotFecundity(dat = data)
-```
+<!-- Default the bars are next to each other, but the bars can be plotted on top of each other by setting `position = "stack"`: -->
+<!-- ```{r eval = FALSE} -->
+<!-- plotCatch(catch = data$Cdata,position = "stack") -->
+<!-- ``` -->
 
-***
+<!-- ![Reported catch levels of pups and 1+ animals with bars on top of each other.](figures/catch_data_stack_new.png){ width=98%} -->
 
-<!-- ![Fecundity rates used in the modelling.](figures/fecundity.png){ width=98%} -->
+<!-- *** -->
 
+<!-- You can plot the modelled population dynamics and the reported catch in the same figure using `plotResCatch()` -->
 
-# Exploring various catch options
-In this section we will describe how to explore various catch options such as finding the equilibrium catch level, i.e., the fixed annual catch level that keeps the future projected population abundance constant, finding the catch level that would reduce the population to $N_{70}$ (70% of the current population size) with probability 0.8 over a 15-years period, and Potential Biological Removals (PBR) catch level.
+<!-- ```{r eval = FALSE} -->
+<!-- plotResCatch(res,data) -->
+<!-- ``` -->
+<!-- ![Reported catch levels of pups and 1+ animals with bars next to each other.](figures/plotResCatch.png){ width=98%} -->
 
-## Equilibrium catch level
-To find the equilibrium catch level we run the function `find.eq.quota()`.
+<!-- *** -->
 
-Default is that the function assumes that zero pups are in the catch and that all catch are 1 year old animals or more. To change he proportion of pups and 1+ animals in the catch you use the `quota` variable, i.e., the following finds the equilibrium catch level assuming 15% pups and 85% 1+ animals in the catch:
-```{r}
-EquilibriumCatch <- find.eq.quota(data = data,
-                                  parameters = parameters, 
-                                  quota = c(0.15,0.85))
+<!-- If you want to explore the birth ogive data used for various periods you can run the `plotOgive()` function: -->
+<!-- ```{r fig.height=4} -->
+<!-- plotOgive(dat = data) -->
+<!-- ``` -->
 
-EquilibriumCatch
-```
+<!-- *** -->
 
-You have now found the fixed annual catch level that stabilizes the future 1+ population under the estimated model for the `harpeast` population and can re-run the model using this equilibrium catch level for the future projection. Default in the when running the model fit assumes zero catch for the future predictions. To re-run the model and plot the estimated future trajectory using the equilibrium catch level you run the following code:
-```{r}
-#Rerun the model
-data$CQuota = EquilibriumCatch
-optEq = run.model(data = data, par = parameters)
-resEq = model.results(data = data,optobject = optEq)
+<!-- <!-- ![Birth ogive for different periods.](figures/birth_ogive.png){ width=98%} --> -->
 
-#Plot model
-plotRes(resEq,data)
-```
+<!-- Since fecundity rates is not available for all years they are interpolated between missing years. You can plot the fecundity rates used in the modelling by running `plotFecundity()`. Default it plots both the linear interpolated fecundity rates and the observed fecundity ratesfor a given population. -->
+<!-- ```{r fig.height=4} -->
+<!-- plotFecundity(dat = data) -->
+<!-- ``` -->
 
-***
+<!-- *** -->
 
-## $N_{70}$ catch level
-To find the the catch level that would reduce the population to 70% of the historical maximum observed (modelled) with probability 0.8 over a 15-year period you run the function `find.N70.quota()`:
-```{r}
-catchN70 = find.N70.quota(data = data,
-                          parameters = parameters, 
-                          quota = c(0,1))
-```
+<!-- <!-- ![Fecundity rates used in the modelling.](figures/fecundity.png){ width=98%} --> -->
 
-For this population it turns out that the current population
-size is below $N_{70}$. Because of this there is no point estimating the $N_{70}$ catch level.
 
-This example assume that zero pups are in the catch and that all catch are 1 year old animals or more. To change he proportion of pups and 1+ animals in the catch you use the `quota` variable, i.e., use `quota = c(0.15,0.85)` to find the $N{70}$ catch level assuming 15% pups and 85% 1+ animals in the catch:
+<!-- # Exploring various catch options -->
+<!-- In this section we will describe how to explore various catch options such as finding the equilibrium catch level, i.e., the fixed annual catch level that keeps the future projected population abundance constant, finding the catch level that would reduce the population to $N_{70}$ (70% of the current population size) with probability 0.8 over a 15-years period, and Potential Biological Removals (PBR) catch level. -->
 
-If the $N_{70}$ population size was below the current population size you could re-run the model using the estimated $N_{70}$ catch level 
-```{r eval=FALSE}
-data$CQuota = catchN70
-optN70 = run.model(data = data, par = parameters)
-resN70 = model.results(data = data,optobject = optN70)
+<!-- ## Equilibrium catch level -->
+<!-- To find the equilibrium catch level we run the function `find.eq.quota()`. -->
 
-#Plot the estimated future trajectory using the N70 catch level
-plotRes(resN70,data)
-```
+<!-- Default is that the function assumes that zero pups are in the catch and that all catch are 1 year old animals or more. To change he proportion of pups and 1+ animals in the catch you use the `quota` variable, i.e., the following finds the equilibrium catch level assuming 15% pups and 85% 1+ animals in the catch: -->
+<!-- ```{r} -->
+<!-- EquilibriumCatch <- find.eq.quota(data = data, -->
+<!--                                   parameters = parameters,  -->
+<!--                                   quota = c(0.15,0.85)) -->
 
-## The Potential Biological Removals (PBR) catch level
-Potential Biological Removals has been defined as:
-$$PBR=\frac{1}{2}R_{max}F_rN_{min},$$
-where $R_{max}$ is the maximum rate of increase for the population (default to 0.12 for pinnipeds), $F_r$ is the recovery factor with values between 0.1 and 1 (default to 0.5), and $N_{min}$ is the estimated population size using 20% percentile of the log-normal distribution. The PBR catch level assumes that the age structure of the removals is proportional to the age composition of the population (i.e. 14% ). To find the PBR catch level using the default parameters you run:
-```{r}
-pbrCatch = PBR(n0=partab[4,3], 
-               n1=partab[5,3], 
-               se0=partab[4,4], 
-               se1=partab[5,4])
+<!-- EquilibriumCatch -->
+<!-- ``` -->
 
-pbrCatch
-```
+<!-- You have now found the fixed annual catch level that stabilizes the future 1+ population under the estimated model for the `harpeast` population and can re-run the model using this equilibrium catch level for the future projection. Default in the when running the model fit assumes zero catch for the future predictions. To re-run the model and plot the estimated future trajectory using the equilibrium catch level you run the following code: -->
+<!-- ```{r} -->
+<!-- #Rerun the model -->
+<!-- data$CQuota = EquilibriumCatch -->
+<!-- optEq = run.model(data = data, par = parameters) -->
+<!-- resEq = model.results(data = data,optobject = optEq) -->
 
+<!-- #Plot model -->
+<!-- plotRes(resEq,data) -->
+<!-- ``` -->
 
+<!-- *** -->
 
-where n0 is the current population size, n1 is the current 1+ population size, se0 is the standard deviation of the estimated current pup abundance, and se1 is the standard deviation of the estimated current 1+ abundance. Recall from the Table above that these quantities could be found using the `par.tab()` function.
+<!-- ## $N_{70}$ catch level -->
+<!-- To find the the catch level that would reduce the population to 70% of the historical maximum observed (modelled) with probability 0.8 over a 15-year period you run the function `find.N70.quota()`: -->
+<!-- ```{r} -->
+<!-- catchN70 = find.N70.quota(data = data, -->
+<!--                           parameters = parameters,  -->
+<!--                           quota = c(0,1)) -->
+<!-- ``` -->
 
-Re-run the model using this catch level
-```{r}
-data$Quota = c(pbrCatch$n0catch,pbrCatch$n1catch)
-optPBR = run.model(data = data, par = parameters)
-resPBR = model.results(data = data,optobject = optPBR)
+<!-- For this population it turns out that the current population -->
+<!-- size is below $N_{70}$. Because of this there is no point estimating the $N_{70}$ catch level. -->
 
-#Plot the estimated future trajectory using PBR catch level
-plotRes(resPBR,data)
-```
+<!-- This example assume that zero pups are in the catch and that all catch are 1 year old animals or more. To change he proportion of pups and 1+ animals in the catch you use the `quota` variable, i.e., use `quota = c(0.15,0.85)` to find the $N{70}$ catch level assuming 15% pups and 85% 1+ animals in the catch: -->
 
-***
+<!-- If the $N_{70}$ population size was below the current population size you could re-run the model using the estimated $N_{70}$ catch level  -->
+<!-- ```{r eval=FALSE} -->
+<!-- data$CQuota = catchN70 -->
+<!-- optN70 = run.model(data = data, par = parameters) -->
+<!-- resN70 = model.results(data = data,optobject = optN70) -->
 
-<!-- ![](figures/EqCatch.png){ width=98%} ![](figures/N70catch.png){ width=98%}![](figures/PBR_catch.png){ width=98%} -->
+<!-- #Plot the estimated future trajectory using the N70 catch level -->
+<!-- plotRes(resN70,data) -->
+<!-- ``` -->
 
-<!-- ![Projections for various catch options. (a) Equilibrium catch level, (b) N70 catch level, and (c) PBR catch level.](figures/CatchOptions.png){ width=98%} -->
+<!-- ## The Potential Biological Removals (PBR) catch level -->
+<!-- Potential Biological Removals has been defined as: -->
+<!-- $$PBR=\frac{1}{2}R_{max}F_rN_{min},$$ -->
+<!-- where $R_{max}$ is the maximum rate of increase for the population (default to 0.12 for pinnipeds), $F_r$ is the recovery factor with values between 0.1 and 1 (default to 0.5), and $N_{min}$ is the estimated population size using 20% percentile of the log-normal distribution. The PBR catch level assumes that the age structure of the removals is proportional to the age composition of the population (i.e. 14% ). To find the PBR catch level using the default parameters you run: -->
+<!-- ```{r} -->
+<!-- pbrCatch = PBR(n0=partab[4,3],  -->
+<!--                n1=partab[5,3],  -->
+<!--                se0=partab[4,4],  -->
+<!--                se1=partab[5,4]) -->
 
-# Appendix
+<!-- pbrCatch -->
+<!-- ``` -->
 
-## Complete code for assessment
-This section contains a script for a complete analysis of the harp seal population in the East Ice (in the White Sea) using the `rSPAMM` package.
-```{r eval = FALSE}
-#Load the rSPAMM package
-library(rSPAMM)
 
-###################
-# Data
-###################
-# You can choose to use either the demo data which is 
-# included in the rSPAMM package or loading the full data
 
-#Use this if analysing the demo data.
-#Loading demo data and parameters
-data("harpeastDemo")
-data = harpeast$data
-parameters = harpeast$parameters
+<!-- where n0 is the current population size, n1 is the current 1+ population size, se0 is the standard deviation of the estimated current pup abundance, and se1 is the standard deviation of the estimated current 1+ abundance. Recall from the Table above that these quantities could be found using the `par.tab()` function. -->
 
+<!-- Re-run the model using this catch level -->
+<!-- ```{r} -->
+<!-- data$Quota = c(pbrCatch$n0catch,pbrCatch$n1catch) -->
+<!-- optPBR = run.model(data = data, par = parameters) -->
+<!-- resPBR = model.results(data = data,optobject = optPBR) -->
 
-#Use this if analysing latest version of the
-#complete data set
-#Download full data. Default the function will
-#ask to create a new folder. If you already have 
-#a folder you can add the option 
-#"chooseFolder = FALSE".
-#Note the Working Directory has to be set to the
-#root folder of the downloaded data, i.e., not 
-#the Data or the Scripts folder.
-downloadData()
-#Loading the data
-data = load.data(population = "harpeast")
-#Loading the parameters
-parameters = load.initial.values(population = "harpeast")
+<!-- #Plot the estimated future trajectory using PBR catch level -->
+<!-- plotRes(resPBR,data) -->
+<!-- ``` -->
 
+<!-- *** -->
 
-##################
-# Model fitting
-##################
-#Run the model
-optobj = run.model(data = data, par = parameters)
+<!-- <!-- ![](figures/EqCatch.png){ width=98%} ![](figures/N70catch.png){ width=98%}![](figures/PBR_catch.png){ width=98%} --> -->
 
-#Obtain the results
-res = model.results(data = data,optobject = optobj)
+<!-- <!-- ![Projections for various catch options. (a) Equilibrium catch level, (b) N70 catch level, and (c) PBR catch level.](figures/CatchOptions.png){ width=98%} --> -->
 
-#Create a nice table with the results
-partab = par.table(results=res, dat=data) 
 
-#Plot the results (both the pup model fit and the N1+ population)
-plotRes(res,data,grDev = TRUE)
+<!-- # Appendix - NB Does not apply for this package. -->
 
+<!-- ## Complete code for assessment -->
+<!-- This section contains a script for a complete analysis of the harp seal population in the East Ice (in the White Sea) using the `rSPAMM` package. -->
+<!-- ```{r eval = FALSE} -->
+<!-- #Load the rSPAMM package -->
+<!-- library(rSPAMM) -->
 
-##################
-# Catch options
-##################
+<!-- ################### -->
+<!-- # Data -->
+<!-- ################### -->
+<!-- # You can choose to use either the demo data which is  -->
+<!-- # included in the rSPAMM package or loading the full data -->
 
-#Find the equilibrium catch level
-#In this example we are assuming 15% pups 
-#and 85% 1+ animals in the catch
-EquilibriumCatch = find.eq.quota(data = data,
-                                 parameters =parameters,
-                                 quota = c(0.15,0.85))
+<!-- #Use this if analysing the demo data. -->
+<!-- #Loading demo data and parameters -->
+<!-- data("harpeastDemo") -->
+<!-- data = harpeast$data -->
+<!-- parameters = harpeast$parameters -->
 
-#Rerun the model using the estimated equilibrium catch level
-data$CQuota = EquilibriumCatch
-optEq = run.model(data = data, par = parameters)
-resEq = model.results(data = data,optobject = optEq)
 
-#Plot the estimated future trajectory using equilibrium catch level
-plotRes(resEq,data,grDev = TRUE)
+<!-- #Use this if analysing latest version of the -->
+<!-- #complete data set -->
+<!-- #Download full data. Default the function will -->
+<!-- #ask to create a new folder. If you already have  -->
+<!-- #a folder you can add the option  -->
+<!-- #"chooseFolder = FALSE". -->
+<!-- #Note the Working Directory has to be set to the -->
+<!-- #root folder of the downloaded data, i.e., not  -->
+<!-- #the Data or the Scripts folder. -->
+<!-- downloadData() -->
+<!-- #Loading the data -->
+<!-- data = load.data(population = "harpeast") -->
+<!-- #Loading the parameters -->
+<!-- parameters = load.initial.values(population = "harpeast") -->
 
-#--------------------------
 
-#Find the N70 catch level
-catchN70 = find.N70.quota(data = data,
-                          parameters = parameters, 
-                          quota = c(0,1))
+<!-- ################## -->
+<!-- # Model fitting -->
+<!-- ################## -->
+<!-- #Run the model -->
+<!-- optobj = run.model(data = data, par = parameters) -->
 
-#For this population it turns out that the current population
-#size is below N70. Because of this there is no point estimating
-#the N70 catch level.
+<!-- #Obtain the results -->
+<!-- res = model.results(data = data,optobject = optobj) -->
 
-#If the current population size was above N70 you could
-#rerun the model using the estimated N70 catch level
-data$CQuota = catchN70
-optN70 = run.model(data = data, par = parameters)
-resN70 = model.results(data = data,optobject = optN70)
+<!-- #Create a nice table with the results -->
+<!-- partab = par.table(results=res, dat=data)  -->
 
-#Plot the estimated future trajectory using the N70 catch level
-plotRes(resN70,data,grDev = TRUE)
+<!-- #Plot the results (both the pup model fit and the N1+ population) -->
+<!-- plotRes(res,data,grDev = TRUE) -->
 
-#--------------------------
 
-#Find the PBR catch level
-#In this example we are assuming 14% pups 
-#and 86% 1+ animals in the catch
-pbrCatch = PBR(n0=partab[4,3], 
-               n1=partab[5,3], 
-               se0=partab[4,4], 
-               se1=partab[5,4])
+<!-- ################## -->
+<!-- # Catch options -->
+<!-- ################## -->
 
-#Re-run the model using the PBR catch level
-data$CQuota = c(pbrCatch$n0catch,pbrCatch$n1catch)
-optPBR = run.model(data = data, par = parameters)
-resPBR = model.results(data = data,optobject = optPBR)
+<!-- #Find the equilibrium catch level -->
+<!-- #In this example we are assuming 15% pups  -->
+<!-- #and 85% 1+ animals in the catch -->
+<!-- EquilibriumCatch = find.eq.quota(data = data, -->
+<!--                                  parameters =parameters, -->
+<!--                                  quota = c(0.15,0.85)) -->
 
-#Plot the estimated future trajectory using PBR catch level
-plotRes(resPBR,data,grDev = TRUE)
-```
+<!-- #Rerun the model using the estimated equilibrium catch level -->
+<!-- data$CQuota = EquilibriumCatch -->
+<!-- optEq = run.model(data = data, par = parameters) -->
+<!-- resEq = model.results(data = data,optobject = optEq) -->
 
-## The population dynamics model
-The population model is an age-structured population dynamics model. For initiation of the model it is assumed that the population had a stable age structure in year $y_0 = 1945$, i.e.,
-$$
-N_{i,y_0} = N_{y_0}s_{1+}^{i-1}(1-s_{1+}), \quad i = 1,\ldots,A-1,
-$$
-$$
-N_{A,y_0}=N_{y_0}s_{1+}^{A-1}.
-$$
-Here $A$ is the maximum age group containing seals aged $A$ and higher, and set to 20 years, and $N_{y_0}$ is the estimated initial population size in year $y_0$. The model is parameterized by the natural mortalities $M_0$ and $M_{1+}$ for the pups and seals of 1 year and older, respectively. These mortalities determine the survival probabilities $s_0 = \exp(-M_0)$ and $s_{1+} = \exp(-M_{1+})$.
+<!-- #Plot the estimated future trajectory using equilibrium catch level -->
+<!-- plotRes(resEq,data,grDev = TRUE) -->
 
-The model has the following set of recursion equations:
-$$
-N_{a,y}=\left(N_{0,y-1}-C_{0,y-1}\right)s_0,
-$$
-$$
-N_{a,y}=\left(N_{a-1,y-1}-C_{a-1,y-1}\right)s_{1+},\quad a=2,\ldots,A-1,
-$$
-$$
-N_{A,y}=\left[\left(N_{A-1,y-1}-C_{a-1,y-1}\right)+\left(N_{A,y-1}-C_{A,y-1}\right)\right]s_{1+}.
-$$
-Since available data do not allow for more detailed age-dependence in survival to be estimated it is assumed that the mortality rates are age-independent within the 1+ group. The $C_{a,y}$ are the age-specific catch numbers. Catch records are aggregated over age, and only provide information about the annual number of pups and number of 1+ seals caught. To obtain $C_{a,y}$ we assume that the age-distribution in the catch follows the modelled age distribution and employ *pro rata* rules in the model:
-$$
-C_{a,y} = C_{1+,y}\frac{N_{a,y}}{N_{1+,y}},\quad a = 1,\ldots,A.
-$$
+<!-- #-------------------------- -->
 
-where $N_{1+,y} = \sum_{y=1}^A N_{a,y}$, with $N_{a,y}$ being the number of individuals ate age $a$ in year $y$.
+<!-- #Find the N70 catch level -->
+<!-- catchN70 = find.N70.quota(data = data, -->
+<!--                           parameters = parameters,  -->
+<!--                           quota = c(0,1)) -->
 
+<!-- #For this population it turns out that the current population -->
+<!-- #size is below N70. Because of this there is no point estimating -->
+<!-- #the N70 catch level. -->
 
-The modelled pup abundance is given by
-$$
-N_{0,y}=\frac{F_y}{2}\sum_{a=1}^Ap_{a,y}N_{a.y},
-$$
+<!-- #If the current population size was above N70 you could -->
+<!-- #rerun the model using the estimated N70 catch level -->
+<!-- data$CQuota = catchN70 -->
+<!-- optN70 = run.model(data = data, par = parameters) -->
+<!-- resN70 = model.results(data = data,optobject = optN70) -->
 
-where $N_{a,y}/2$ is the number of females ate age $a$ in year $y$, $F_y$ is the time-varying fecundity rates and $p_{a,y}$ are the time-varying age specific proportions of mature females.
+<!-- #Plot the estimated future trajectory using the N70 catch level -->
+<!-- plotRes(resN70,data,grDev = TRUE) -->
 
-The model is fitted to the survey pup production estimates and the fecundity rates by maximum likelihood. Assuming normality for the pup production estimates, their contribution to the log-likelihood function is
-$$
-\sum_y-\log(\sigma_{0,y})-\frac{1}{2}\frac{\left(N_{0,y}-n_{0,y}\right)^2}{\left(\sigma_{0,y}\right)^2},
-$$
-where $n_{0,y}$ and $\sigma_{0,y}$ denote the survey pup production count and corresponding standard error for year $y$. 
+<!-- #-------------------------- -->
 
-The model has a Bayesian flavour as priors are imposed on some of the parameters. A vague normal prior is assumed for the initial population size $N_{y_0}$. A truncated normal prior was used for both the pup mortalities $M_0$ and $M_{1+}$.
+<!-- #Find the PBR catch level -->
+<!-- #In this example we are assuming 14% pups  -->
+<!-- #and 86% 1+ animals in the catch -->
+<!-- pbrCatch = PBR(n0=partab[4,3],  -->
+<!--                n1=partab[5,3],  -->
+<!--                se0=partab[4,4],  -->
+<!--                se1=partab[5,4]) -->
 
-All parameter estimates are found by maximizing the likelihood function using the R package `TMB`.
+<!-- #Re-run the model using the PBR catch level -->
+<!-- data$CQuota = c(pbrCatch$n0catch,pbrCatch$n1catch) -->
+<!-- optPBR = run.model(data = data, par = parameters) -->
+<!-- resPBR = model.results(data = data,optobject = optPBR) -->
+
+<!-- #Plot the estimated future trajectory using PBR catch level -->
+<!-- plotRes(resPBR,data,grDev = TRUE) -->
+<!-- ``` -->
+
+<!-- ## The population dynamics model -->
+<!-- The population model is an age-structured population dynamics model. For initiation of the model it is assumed that the population had a stable age structure in year $y_0 = 1945$, i.e., -->
+<!-- $$ -->
+<!-- N_{i,y_0} = N_{y_0}s_{1+}^{i-1}(1-s_{1+}), \quad i = 1,\ldots,A-1, -->
+<!-- $$ -->
+<!-- $$ -->
+<!-- N_{A,y_0}=N_{y_0}s_{1+}^{A-1}. -->
+<!-- $$ -->
+<!-- Here $A$ is the maximum age group containing seals aged $A$ and higher, and set to 20 years, and $N_{y_0}$ is the estimated initial population size in year $y_0$. The model is parameterized by the natural mortalities $M_0$ and $M_{1+}$ for the pups and seals of 1 year and older, respectively. These mortalities determine the survival probabilities $s_0 = \exp(-M_0)$ and $s_{1+} = \exp(-M_{1+})$. -->
+
+<!-- The model has the following set of recursion equations: -->
+<!-- $$ -->
+<!-- N_{a,y}=\left(N_{0,y-1}-C_{0,y-1}\right)s_0, -->
+<!-- $$ -->
+<!-- $$ -->
+<!-- N_{a,y}=\left(N_{a-1,y-1}-C_{a-1,y-1}\right)s_{1+},\quad a=2,\ldots,A-1, -->
+<!-- $$ -->
+<!-- $$ -->
+<!-- N_{A,y}=\left[\left(N_{A-1,y-1}-C_{a-1,y-1}\right)+\left(N_{A,y-1}-C_{A,y-1}\right)\right]s_{1+}. -->
+<!-- $$ -->
+<!-- Since available data do not allow for more detailed age-dependence in survival to be estimated it is assumed that the mortality rates are age-independent within the 1+ group. The $C_{a,y}$ are the age-specific catch numbers. Catch records are aggregated over age, and only provide information about the annual number of pups and number of 1+ seals caught. To obtain $C_{a,y}$ we assume that the age-distribution in the catch follows the modelled age distribution and employ *pro rata* rules in the model: -->
+<!-- $$ -->
+<!-- C_{a,y} = C_{1+,y}\frac{N_{a,y}}{N_{1+,y}},\quad a = 1,\ldots,A. -->
+<!-- $$ -->
+
+<!-- where $N_{1+,y} = \sum_{y=1}^A N_{a,y}$, with $N_{a,y}$ being the number of individuals ate age $a$ in year $y$. -->
+
+
+<!-- The modelled pup abundance is given by -->
+<!-- $$ -->
+<!-- N_{0,y}=\frac{F_y}{2}\sum_{a=1}^Ap_{a,y}N_{a.y}, -->
+<!-- $$ -->
+
+<!-- where $N_{a,y}/2$ is the number of females ate age $a$ in year $y$, $F_y$ is the time-varying fecundity rates and $p_{a,y}$ are the time-varying age specific proportions of mature females. -->
+
+<!-- The model is fitted to the survey pup production estimates and the fecundity rates by maximum likelihood. Assuming normality for the pup production estimates, their contribution to the log-likelihood function is -->
+<!-- $$ -->
+<!-- \sum_y-\log(\sigma_{0,y})-\frac{1}{2}\frac{\left(N_{0,y}-n_{0,y}\right)^2}{\left(\sigma_{0,y}\right)^2}, -->
+<!-- $$ -->
+<!-- where $n_{0,y}$ and $\sigma_{0,y}$ denote the survey pup production count and corresponding standard error for year $y$.  -->
+
+<!-- The model has a Bayesian flavour as priors are imposed on some of the parameters. A vague normal prior is assumed for the initial population size $N_{y_0}$. A truncated normal prior was used for both the pup mortalities $M_0$ and $M_{1+}$. -->
+
+<!-- All parameter estimates are found by maximizing the likelihood function using the R package `TMB`. -->
