@@ -1,0 +1,568 @@
+---
+title: "The 2019 abundance of harp seals (*Pagophilus groenlandicus*) in the Greenland Sea"
+author: "Martin Biuw, Tore Haug, Tor Arne Øigård"
+date: "Draft: `r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  bookdown::pdf_document2:
+##  bookdown::word_document2:
+    toc: no
+##    reference_doc: 'C:/Users/a5406/Documents/Custom Office Templates/WordTemplateWGHARP.dotx'
+##    latex_engine: xelatex
+
+##output: 
+##  pdf_document:
+  
+##    latex_engine: xelatex
+always_allow_html: yes
+bibliography: 'C:/Users/a5406/Documents/Articles/library.bib'
+csl: 'ices-journal-of-marine-science.csl'
+##biblio-style: apalike
+##biblio-style: harvard
+
+##  \usepackage{fancyhdr}
+##  \pagestyle{fancy}
+##  \rhead{WP SEA 250}
+
+header-includes: 
+  \usepackage{float}
+  \usepackage{gensymb}
+  \usepackage{circ}
+  \usepackage{caption}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval=T)
+knitr::opts_knit$set(root.dir='C:/Users/a5406/Documents/Populasjonsmodellering/rSPAMM/rSPAMM-master')
+```
+
+```{r runAss, message=F, cache=T, update.cache=F, warning=F, include=F}
+source('./R/inputFunctions.R')
+source('./R/run_assessment_models.R')
+source('./R/outputFunctions.R')
+source('./R/functions.R')
+source('./R/catch.options.R')
+
+data <- load.data('harpwest')
+parameters <- load.initial.values('harpwest')
+obj <- load.model.object(template='harps_and_hoods_population_model2')
+opt <- run.model()
+res <- model.results()
+partab <- par.table() 
+LCI <- partab$Mean - (1.96*partab$SD)
+UCI <- partab$Mean + (1.96*partab$SD)
+
+
+## Mean F:
+datMF <- load.data('harpwest', Fpast = 'mean')
+parameters <- load.initial.values('harpwest')
+objMF <- load.model.object(dat=datMF, template='harps_and_hoods_population_model2')
+optMF <- run.model(objMF)
+resMF <- model.results(datMF, objMF, optMF)
+partMF <- par.table(resMF, datMF) 
+LCIMF <- partMF$Mean - (1.96*partMF$SD)
+UCIMF <- partMF$Mean + (1.96*partMF$SD)
+
+
+## Zero catch:
+datZ <- load.data('harpwest', catch_quota=c(0,0))
+objZ <- load.model.object(dat=datZ, template='harps_and_hoods_population_model2')
+optZ <- run.model(objZ)
+resZ <- model.results(datZ, objZ, optZ)
+partZ <- par.table(resZ, datZ) 
+
+
+curCatch <- apply(tail(data$Cdata, 5)[,-1], 2, mean)
+## Find equilibrium quota: 
+## 0% pups:
+qEq <- find.eq.quota(method='Dbased')
+datEq <- load.data('harpwest', catch_quota=qEq)
+objEq <- load.model.object(dat=datEq, template='harps_and_hoods_population_model2')
+optEq <- run.model(objEq)
+resEq <- model.results(datEq, objEq, optEq)
+partEq <- par.table(resEq, datEq) 
+
+## Current pup quota:
+qEqM <- find.eq.quota(method='Dbased', quota=curCatch/sum(curCatch))
+datEqM <- load.data('harpwest', catch_quota=qEqM)
+objEqM <- load.model.object(dat=datEqM, template='harps_and_hoods_population_model2')
+optEqM <- run.model(objEqM)
+resEqM <- model.results(datEqM, objEqM, optEqM)
+partEqM <- par.table(resEqM, datEqM) 
+
+
+## Find N70 quota: 
+
+## 0% pups:
+q70 <- find.N70.quota(method='Dbased')
+dat70 <- load.data('harpwest', catch_quota=q70)
+obj70 <- load.model.object(dat=dat70, template='harps_and_hoods_population_model2')
+opt70 <- run.model(obj70)
+res70 <- model.results(dat70, obj70, opt70)
+part70 <- par.table(res70, dat70) 
+
+## Current pup quota:
+q70M <- find.N70.quota(method='Dbased', quota=curCatch/sum(curCatch))
+dat70M <- load.data('harpwest', catch_quota=q70M)
+obj70M <- load.model.object(dat=dat70M, template='harps_and_hoods_population_model2')
+opt70M <- run.model(obj70M)
+res70M <- model.results(dat70M, obj70M, opt70M)
+part70M <- par.table(res70M, dat70M) 
+
+## 2016 dataset:
+dat16 <- load.data('harpwest2016')
+parameters16 <- load.initial.values('harpwest2016')
+obj16 <- load.model.object(dat=dat16, template='harps_and_hoods_population_model2')
+opt16 <- run.model(obj16)
+res16 <- model.results(dat16, obj16, opt16)
+part16 <- par.table(res16, dat16) 
+
+```
+
+# ABSTRACT
+Here we present an updated population assessment of the Greenland Sea harp seal pupulation, based on a new pup production estimate from 2018, and catch data up to and including the 2019 season. In agreement with previously published assessments, our model runs indicated an increase in abundance of the Greenland Sea harp seal population from around 1970s. However, the rate of increase is considerably lower than previous estimates, with estimated abundances being stable or slighly decreasing since the early 2000's. We obtained an estimated 2019 abundance of `r format(round(partab$Mean[match('N1Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N1Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N1Current', partab$par)]), big.mark=' ')`) 1+ animals and `r format(round(partab$Mean[match('N0Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N0Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N0Current', partab$par)]), big.mark=' ')`) pups, yielding a total estimate of `r format(round(partab$Mean[match('NTotCurrent', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('NTotCurrent', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('NTotCurrent', partab$par)]), big.mark=' ')`) seals. Current catch levels indicated an increase in the 1+ population of `r round(100*(abs(1-partab$Mean[match('D1', partab$par)])))`% over the next 15 years. The equilibrium catch level was found to be `r format(round(qEq[2]), big.mark=' ')` (100% 1+ animals). If pups are hunted two pups balance one 1+ animal. A catch level of `r format(round(q70[2]), big.mark=' ')` animals (100% 1+) will bring the population size down to N70 with probability 0.8 within the next 15 years. These values are all considerably lower than previous estimates. The reason for these differences compared to previous assessments is most likely the relatively low pup production estimate obtained in 2018 (`r format(tail(data$pupProductionData[,2],1), big.mark=' ')`, CV=`r format(tail(data$pupProductionData[,3],1), digits=2)`), highlighting the sensitivity of the model to sparse observational data.  
+
+# INTRODUCTION
+
+Total abundance of harp seals in the Greenland Sea is estimated using a model which incorporates data on age specific reproductive rates and removals with independent, periodic estimates of pup production [see @Skaug2007; @Hammill2010; @ICES2011]. Previous to 2011, the model used to assess the Greenland Sea harp seal population only made use of a constant maturity ogive and pregnancy rate over the entire time period the model was run. In the 2011 meeting of WGHARP, however, the traditional model was modified to allow for non-constant maturity ogives and pregnancy rates in order to utilize all historical data available [@ICES2011]. The model also allowed the estimates obtained to be projected into a future population size for which statistical uncertainty was provided for several relevant harvest options. By incorporating the full range of reproductive data available, both the abundance estimate and the estimated harvest options provided by the model were lower, but presumably more realistic, than those provided by the original model [@ICES2011]. The model was used for management of the Greenland Sea harp seal population in 2013 [@ICES2013] and 2016 [@ICES2016]. We have continued to use this model for providing advice for setting catch quotas for the Greenland Sea harp seal population for 2020 and subsequent years. 
+
+# MATERIALS & METHODS
+## Reproductive data
+The population dynamics model use historical catch records, fecundity rates, age specific proportions of mature females, and estimates of pup production to estimate the population trajectory. 
+
+Two types of reproductive data are used: information on the proportion of females that are mature at a given age (i.e., maturity ogive) and the proportion of mature females that are pregnant at a given year (i.e. fecundity rate). The historical data of the maturity curve is sparse, consisting of only three curves (Table 1). One curve is from the period 1959 – 1990, one is from 2009 and the last one is from 2014. For the periods with missing data (1990 – 2009 and 2009 – 2014), a linear transition between the available maturity curves is assumed. Figure 1 show the maturity curves in Table 1, along with the linear transition between the curves in years with missing data.
+
+The model also makes use of historical values of the fecundity rates F rates that are obtained through sampling during commercial hunt (Table 2).  Data are available from a Russian long term data set [1959 - 1991, see @Frie2003] and later updated with new Norwegian data for 2008 and 2009 [@ICES2011], and for 2014 [@ICES2016]. The most recent values are now 5 years old, which secures data-rich status for the stock. To maintain this status, samples were collected during the hunting season in 2019, but these materials have not yet been analysed and are thus not available for this meeting. The long term data set on pregnancy rates relies on the assumption that pregnancy in the previous cycle can be estimated based on the presence/absence of a large luteinised Corpus albicans (LCA) in the ovaries of females sampled in April-June [@ICES2009]. A similar approach has previously been used for estimation of pregnancy rates of ringed seals [@Stirling2005]. For periods where data are missing, a linear transition between estimates is assumed. Figure 2 shows the available historical pregnancy rates and the linear transition in periods with missing data. As opposed to being part of the data to which the model is fit by maximum likelihood, these rates are treated as known quantities by the population dynamics model.
+
+
+## Survey pup production estimates and catch history
+Pup production estimates are available from mark-recapture estimates [1983-1991, see @Øien1995] and aerial surveys conducted in 2002 [@Haug2006], in 2007 [@Øigård2010], in 2012 [@Øigård2014a], and in 2018 [@Biuw2019]. Catch levels for the period 1946 – 2019 are presented in @ICES2014 and @Haug2019.
+
+## The population model
+The population model used to assess the abundance for the NW Atlantic harp seal population is a deterministic age-structured population dynamics model. A similar model is used to assess the abundance of the Greenland Sea hooded seal population and the Barents Sea / White Sea harp seal population [@ICES2013]. It was also used for assessing the historical population of the Barents Sea harp seals [@Skaug2007].
+For initiation of the model it is assumed that the population had a stable age structure in year $y_0 = 1945$, i.e.,
+
+$$N_{i,y_0}=N_{y_0}s_{1+}^{i-1}(1-s_{1+})\quad j=1,..,A-1\quad (1)$$
+
+$$N_{A,y_0}=N_{y_0}s_{1+}^{A-1}\quad (2)$$
+Here, $A$ is the maximum age group containing seals aged $A$ and higher, and set to 20 years [@ICES2013], and $N_{y_0}$ is the estimated initial population size in year $y_0$. The model is parameterized by the natural mortalities $M_0$ and $M_{1+}$ for the pups and seals 1 year and older seals, respectively. These mortalities determine the survival probabilities $s_0 = exp(-M_0)$ and $s_{1+} = exp(-M_{1+})$.
+
+The model has the following set of recursion equations:
+$$N_{1,y}=(N_{0,y-1}-C{0,y-1})s_0$$
+$$N{a,y}=(N_{a-1,y-1}-C_{a-1,y-1})s_{1+}\quad a=2,..,A-1\quad (3)$$
+$$N_{A,y}=[(N_{A-1,y-1}-C_{A-1,y-1})+(N_{A-1,y-1}-C_{A,y-1})]s_{1+}$$
+
+Since available data do not allow for more detailed age-dependence in survival to be estimated it is assumed that the mortality rates are age-independent within the 1+ group. The $C_{a,y}$ are the age-specific catch numbers. Catch records are aggregated over age, and only provide information about the annual number of pups and number of 1+ seals caught. To obtain $C_{a,y}$ in the last of the reqursive equations, we assume that the age-distribution in the catch follows the modelled age distribution and employ pro rata rules in the model [@Skaug2007]:
+
+$$C_{a,y}=C_{1+,y}\frac{N_{a,y}}{N_{1+,y}}\quad a=1,...,A\quad (4)$$
+where $N_{1+,y}=\sum_{y=1}^AN_{a,y}$ , with $N_{a,y}$ being the number of individuals at age $a$ in year $y$.
+
+The modelled pup abundance is given by:
+
+$$N_{0,y}=\frac{F_y}{2}\sum_{a=1}^Ap_{a,y}N_{a,y}\quad (5)$$
+where $N_{a,y}$ is the number of females at age $a$ in year $y$, $F_y$ is the time-varying fecundity rates and $p_{a,y}$ are the time-varying age specific proportions of mature females.
+
+The model calculates a depletion coefficient $D_{1+}$, which describes the degree of increase or decrease in the 1+ population trajectory on a 15-year scale:
+
+$$D_{1+}=\frac{N_{1+,y+15}}{N_{1+,y}}\quad (6)$$
+where $y$ is the year of last available data on catch and/or pup production (i.e in this case 2019). The depletion coefficient is used for finding the equilibrium catch levels. The equilibrium catch level is defined as the catch level that maintains the population size at the current level, i.e. the catch level that gives $D_{1+}=1$.
+
+## Parameter estimation
+Assuming normality for the pup production counts, their contribution to the log-likelihood function is:
+
+$$\sum_{y=y_{E_1}}^{y=y_{E_Y}}-log(cv_{0,y})-\frac{1}{2}\frac{(N_{0,y}-n_{0,y})}{(cv_{0,y}n_{0,y})}\quad (7)$$
+where $y_{E_1}...y_{E_Y}$ are the $Y$ years with available pup production estimates, $n_{0,y}$ and $cv_{0,y}$ denotes the survey pup production count and corresponding coefficient of variation (CV) for year $y$, respectively (Table 3).
+
+The population dynamics model is a Bayesian type model as priors are imposed on the parameters. A vague normal prior is assumed for the initial population size $N_{y_0}$ and a truncated normal prior for both the pup mortality $M_0$ and the mortality for the 1+ group $M_{1+}$. The priors used are found in Table 4. 
+The combined likelihood-contributions for these priors are:
+
+$$-\frac{1}{2}(\boldsymbol b-\boldsymbol m)^T\Sigma^-1(\boldsymbol b-\boldsymbol m)-\frac{1}{2}ln|\Sigma|-\frac{3}{2}ln(2\pi)\quad (8)$$
+where $\boldsymbol b = (N_{y_0}, M_0, M_{1+})^T$ is a vector containing the parameters estimated by the model, $T$ denotes the vector transpose, $\boldsymbol m$ is a vector containing the respective mean values of the normal priors for the parameters in $\boldsymbol b$, and $\Sigma$ is a diagonal matrix with the variance of the respective prior distributions on the diagonal. The mean of the prior for $M_0$ was taken to be three times that of the mean of $M_{1+}$.
+
+All parameter estimates are found by minimizing the likelihood function using the statistical software Template Model Builder [@Kristensen2016]. Template Model Builder (TMB) calculates standard errors (SE) for the model parameters, as well as the derived parameters such as present population size and $D_{1+}$. Template Model Builder uses a quasi-Newton optimization algorithm with bounds on the parameters, and calculates estimates of standard errors of model parameters using the ”delta-method” [@Skaug2007]. The catch data enter the model through Eq. (4), but do not otherwise contribute to the objective function. All data processing and analyses were done using R [@RCoreTeam2018]. Model fitting was done using the R package TMB [@Kristensen2016].  
+
+
+# RESULTS
+
+## Population estimates
+
+The estimated population sizes and parameters used in the model are presented in Table 4. The modelled population trajectory is shown in Figure 3. Similar to previous assessments, the estimated population trajectory indicates an increase from the 1970s up until about 2004, after which the population appears to have stabilized (with some fluctuations) around about 1+ 325 000 animals. This represents roughly 70% of the estimated maximum historical population size estimated using the updated estimates. Assuming annual catches at levels representing the mean catches over the last five years, the model indicates an increase in total abundance of `r round(100*(abs(1-partab$Mean[match('D1', partab$par)])))`% over the next 15 years. However, the confidence intervals are very wide and indicate that the 15 year projections could range from below N70 (around `r format(1000*round((res$rep.matrix[tail(res$indNTot,1),1]-(1.96*res$rep.matrix[tail(res$indNTot,1),2]))/1000), big.mark=' ')`) to around `r format(1000*round((res$rep.matrix[tail(res$indNTot,1),1]+(1.96*res$rep.matrix[tail(res$indNTot,1),2]))/1000), big.mark=' ')` seals. In addition to the wide confidence intervals, these projections are substantially lower than projections obtained from model runs presented in @ICES2016. and any future projections should therefore be interpreted with care.
+
+The model estimates a 2019 abundance of `r format(round(partab$Mean[match('N1Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N1Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N1Current', partab$par)]), big.mark=' ')`) 1+ animals and `r format(round(partab$Mean[match('N0Current', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('N0Current', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('N0Current', partab$par)]), big.mark=' ')`) pups, yielding a total estimate of `r format(round(partab$Mean[match('NTotCurrent', partab$par)]), big.mark=' ')` (`r format(round(LCI[match('NTotCurrent', partab$par)]), big.mark=' ')` – `r format(round(UCI[match('NTotCurrent', partab$par)]), big.mark=' ')`) seals. Again, these estimates are considerably lower than those predicted for 2017 (543 800 (366 500 – 719 400) 1+ animals and 106 500 (76 500 – 136 400) pups, yielding a total estimate of 650 300 (471 200 – 829 300) seals).
+
+In light of the relatively sparse fecundity estimates available for this population, we also ran the same basic model, except that fecundity was kept at its average value (F=`r round(mean(datMF$Ftmp), 3)`) throughout the entire time series. This had very modest effects on the population trajectories and parameter estimates (see Fig 2). The most obvious differences were:
+
+1. Slightly higher mean estimate of maximum historical population size (`r format(round(max(resMF$rep.matrix[resMF$indNTot[c(1:match(2019, resMF$years))],1])), big.mark=' ')` vs. `r format(round(max(res$rep.matrix[res$indNTot[c(1:match(2019, res$years))],1])), big.mark=' ')`),
+
+2. Slightly lower estimate of minimum historical population size (`r format(round(min(resMF$rep.matrix[resMF$indNTot[c(1:match(2019, resMF$years))],1])), big.mark=' ')` vs. `r format(round(min(res$rep.matrix[res$indNTot[c(1:match(2019, res$years))],1])), big.mark=' ')`), 
+
+3. Slightly smoother overall population trajectories
+
+4. No sudden decrease in pup production estimate immediately after last estimate, and
+
+5. Slightly higher estimate of average projected total population size (`r format(round(partMF$Mean[8]), big.mark=' ')` vs. `r format(round(partab$Mean[8]), big.mark=' ')`).
+
+However, none of these differences are sufficiently large to fundamentally change the conclusions or our assessment of the population status for Greenland Sea harp seals.
+
+
+## Catch Options
+The impact of different catch scenarios are explored over a 15 year period. Options considered were: 
+1. Current catch level (average of the catches in the period 2015 – 2019).
+2. Equilibrium catches.
+3. Catches that would reduce the population to N70 with probability 0.8 over a 15-years period.
+
+Current catch level is defined as the average catch level of the last 5 years (i.e. 2015-2019). The equilibrium catch level is defined as the (fixed) annual catch level that stabilizes the future 1+ population under the estimated model. We ran two sets of models for each catch option; the first assuming 0% pups in the catch, and the other using the average pup proportion in 2015-2019 (`r round(100*curCatch/sum(curCatch), 1)[1]`%). The catch level that would reduce the population size to N70 with probability 0.8 over a 15-years period is found by finding the catch level that has N70 just included in the 80% confidence interval of the 15-year prediction of the total population size.
+
+The estimates for the various catch options are given in Table 5. Current catch level indicates an increase in the 1+ population of `r round(100*(abs(1-partab$Mean[match('D1', partab$par)])))`% the next 15 years. The equilibrium catch level is `r format(round(qEq[2]), big.mark=' ')` (100% 1+ animals). If pups are hunted two pups balance one 1+ animal. A catch level of `r format(round(q70[2]), big.mark=' ')` animals (100% 1+) will bring the population size down to N70 with probability 0.8 within 15 years.
+
+## DISCUSSION
+Our results suggest that the addition of the relatively low pup production estimate from 2018 (`r format(tail(data$pupProductionData[,2],1), big.mark=' ')`, CV=`r format(tail(data$pupProductionData[,3],1), digits=2)`) results in markedly different population trajectories (Fig. 3) and estimates of both historical, current and future population sizes (Table 4), compared to those presented in @ICES2016. While @Øigård2016a estimated that the Greenland Sea population increased from a mid 1970s size of approximately 35% of its level in 2016, our results indicate a much more modest increase from a mid 1970's size of about `r round(100*min(res$rep.matrix[res$indNTot])/partab$Mean[6])`% of current estimated population size in 2019. This is due to both a higher mid-1970s population estimate in the new runs (`r format(round(min(res$rep.matrix[res$indNTot])), big.mark=' ')` compared to `r format(round(min(res16$rep.matrix[res16$indNTot])), big.mark=' ')`) and a lower current population estimate in the new runs (2019 population estimate of `r format(round(partab$Mean[6]), big.mark=' ')` compared to 2016 estimate of `r format(round(part16$Mean[6]), big.mark=' ')`). This suggests that the difference between the slower population growth rate of Greenland Sea harp seal population and the faster growth rate of the Northwest Atlantic is even larger than previously identified. 
+
+It may be that the population dynamics of the Greenland Sea harp seals is similar to that of the Barents Sea / White Sea population. That other Northeast Atlantic population appears to have undergone a slow increase of the population from the mid 1970s [@Skaug2007] to a peak during the early 2000s, followed by a recent dramatic pup production decrease resulting in a current estimated total abundance of approximately 1.4 million individuals [@ICES2014]. Given that the two Northeast Atlantic harp seal populations exploit common feeding grounds in the northern Barents Sea during their most intensive feeding period from July to November [@Folkow2004; @Nordøy2008], it may not be surprising that they should exhibit similar population trends.   While problems due to drift ice retreat appear to affect all three populations [@ICES2011], the ecological and environmental conditions faced by seals in the Northeast and Northwest Atlantic are very different. Barents Sea / White Sea harp seals have been observed to exhibit poorer body condition in recent years than 10-15 years ago [@Øigård2013], presumably due to possible links between the abundance of fish species such as cod Gadus morhua, polar cod Boreogadus saida, and capelin Mallotus villosus, which are competing with harp seals for prey. Lower abundance of pelagic crustaceans (krill and amphipods) may also have contributed to the observed lower harp seal body condition in the Barents Sea [@Øigård2013]. Similar body condition data are not available for the Greenland Sea harp seal population at present. While the stocks of fish in the Barents Sea, cod in particular, are at record high levels at present [@Bogstad2015], the situation is the opposite in the Northwest Atlantic, where cod has been almost completely absent over the past two decades [@Link2009; @Hutchings2011]. Thus, it seems possible that less seal-fish competition in the Northwest Atlantic may have promoted more favourable growth conditions for the harp seal population in that area [a predator pit effect, see @Link2009] as compared to harp seals in the Northeast Atlantic.
+
+
+# REFERENCES
+<div id="refs"></div>
+
+
+\newpage
+
+```{r pTab, message=FALSE, warning=FALSE}
+## Select original maturity curves:
+
+Pm <- data$Pmat[match(c(1950,2009,2014), data$Cdat[,1]),]
+Pm <- as.data.frame(Pm)[,c(1:13)]
+names(Pm) <- paste0(c(1:length(Pm)),'y')
+Pm <- cbind(Age=paste0('p', c(1:nrow(Pm))), Pm)
+Pm$Age <- as.character(Pm$Age)
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  pt <- flextable(Pm)
+  pt <- colformat_num(pt, names(Pm)[c(2:length(Pm))], big.mark='', digits=2)
+  pt <- align(pt, c(1:nrow(Pm)), c(1:length(Pm)), 'center', part='body')
+  pt <- align(pt, 1, c(1:length(Pm)), 'center', part='header')
+  pt <- add_header(pt, Age='Estimates of proportions of mature females (pi,t). The P1 estimates are from the period 1950-1990 (ICES, 2009), the P2 estimates are from 2009 (ICES, 2011) and the P3 estimates are from 2014 
+(Frie, 2016).')
+  pt <- merge_at(pt, 1, c(1:length(Pm)), part='header')
+  pt <- border_remove(pt)
+  pt <- hline_bottom(pt, border = fp_border(style = "solid", width=2), part='body')
+  pt <- hline_bottom(pt, border = fp_border(style = "solid", width=1), part='header')
+  pt <- hline(pt, i=1, border = fp_border(style = "solid", width=2), part='header')
+  pt <- width(pt, width=0.5)
+  for(i in 1:nrow(Pm)) {
+    pt <- compose(pt, i, 1, as_paragraph(as_chunk(substr(Pm[i,1], 1, 1)), as_chunk(substr(Pm[i,1], 2, nchar(Pm[i,1])), fp_text(vertical.align = 'subscript'))))
+  }  
+  pt
+} else {
+    Pm$Age <- paste0('$', substr(Pm$Age, 1, 1), '_{', substr(Pm$Age, 2, nchar(Pm$Age)), '}$')
+  pander::pander(Pm, booktabs=T, escape=T,  caption='Estimates of proportions of mature females (pi,t). The P1 estimates are from the period 1950-1990 (ICES, 2009), the P2 estimates are from 2009 (ICES, 2011) and the P3 estimates are from 2014 (Frie, 2016).')
+}
+
+```
+
+<br/><br/>
+
+```{r fTab, message=FALSE, warning=FALSE}
+## Fecundity:
+
+Fm <- read.table(paste("./Data/harpwest/fecundity.dat",sep = ""),header = FALSE)
+names(Fm) <- c('Year', 'Fecundity', 'SD')
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  Fm$Fecundity <- round(Fm$Fecundity, 2)
+  fm <- flextable(Fm)
+  fm <- colformat_num(fm, c('Fecundity', 'SD'), big.mark='', digits=2)
+  fm <- align(fm, c(1:nrow(Fm)), c(1:length(Fm)), 'center', part='body')
+  fm <- align(fm, 1, c(1:length(Fm)), 'center', part='header')
+  fm <- add_header(fm, Year='Estimates of proportion of Greenland Sea harp seal females giving birth. Data from (ICES, 2011) and (Frie, 2016).')
+  fm <- merge_at(fm, 1, c(1:length(Fm)), part='header')
+  fm <- border_remove(fm)
+  fm <- hline_bottom(fm, border = fp_border(style = "solid", width=2), part='body')
+  fm <- hline_bottom(fm, border = fp_border(style = "solid", width=1), part='header')
+  fm <- hline(fm, i=1, border = fp_border(style = "solid", width=2), part='header')
+  fm <- width(fm, width=1)
+  fm
+} else {
+  pander::pander(Fm, booktabs=T, escape=T,  caption='Estimates of proportion of Greenland Sea harp seal females giving birth. Data from (ICES, 2011) and (Frie, 2016).')
+}
+```
+
+<br/><br/>
+
+```{r pProdTab, message=FALSE, warning=FALSE}
+  require(officer)
+  pProdTab <- as.data.frame(data$pupProductionData)
+  names(pProdTab) <- c('Year', 'Estimated number of pups', 'CV')
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  pProdTab$Year <- as.integer(pProdTab$Year)
+  ft <- flextable(pProdTab)
+  ft <- colformat_num(ft, 'Year', big.mark='', digits=0)
+  ft <- colformat_num(ft, 'Estimated number of pups', big.mark=' ', digits=0)
+  ft <- add_header(ft, Year='Estimates of Greenland Sea harp seal pup production (ICES 2011, Øigård et al., 2010, Øigård et al., 2019). Data from 1983-1991 are mark-recapture estimates; those from 2002, 2007, 2012 and 2018 are from aerial surveys.')
+  ft <- merge_at(ft, 1, c(1:length(pProdTab)), part='header')
+  ft <- align(ft, 1, c(1:length(pProdTab)), 'left', part='header')
+  ft <- border_remove(ft)
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=2), part='body')
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ft <- width(ft, j='Estimated number of pups', width=2)
+  ft <- align(ft, c(1:nrow(pProdTab)), c(1:length(pProdTab)), 'center', part='body')
+  ft <- align(ft, 2, c(1:length(pProdTab)), 'center', part='header')
+  
+  ft
+} else {
+  pProdTab$`Estimated number of pups` <- format(pProdTab$`Estimated number of pups`, big.mark=' ', scientific=F)
+  pander::pander(pProdTab, style='rmarkdown', split.table=Inf, justify=c('left', rep('right', 2)), caption='Estimates of Greenland Sea harp seal pup production (ICES 2011, Øigård et al., 2010, Øigård et al., 2019). Data from 1983-1991 are mark-recapture estimates; those from 2002, 2007, 2012 and 2018 are from aerial surveys.')
+} 
+```
+
+<br/><br/>
+
+```{r parTab, message=FALSE, warning=FALSE}
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+  part <- partab
+  part <- rbind(part, tail(part70, 1))
+  part$Mean[nrow(part)] <- round(part$Mean[nrow(part)])
+  part$SD[nrow(part)] <- round(part$SD[nrow(part)])
+  part$parNames[nrow(part)] <- 'N70'
+  part <- rbind(part, tail(part70, 1))
+  part$Mean[nrow(part)] <- round(max(res$rep.matrix[res$indNTot[c(1:match(max(data$Cdata[,1]), res$years))]])*0.3)
+  part$parNames[nrow(part)] <- 'Nlim'
+  
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  part$Mean <- as.character(round(part$Mean, 2))
+  part$Mean[c(1,4,5,6,8,9,10)] <- unlist(lapply(part$Mean[c(1,4,5,6,8,9,10)], function(x) unlist(strsplit(x, '.', fixed=T))[1]))
+  part$Mean[c(1,4,5,6,8,9,10)] <- format(as.numeric(part$Mean[c(1,4,5,6,8,9,10)]), big.mark=' ')
+  
+  part$SD <- as.character(round(part$SD, 2))
+  part$SD[c(1,4,5,6,8,9,10)] <- unlist(lapply(part$SD[c(1,4,5,6,8,9,10)], function(x) unlist(strsplit(x, '.', fixed=T))[1]))
+  part$SD[c(1,4,5,6,8,9,10)] <- format(as.numeric(part$SD[c(1,4,5,6,8,9,10)]), big.mark=' ')
+  part$SD[nrow(part)] <- '-'
+
+  prt <- flextable(part[,-1])
+  for(i in 1:nrow(partab)) {
+    prt <- compose(prt, i, 1, as_paragraph(as_chunk(substr(partab$parNames[i], 1, 1), fp_text()), as_chunk(substr(partab$parNames[i], 2, nchar(partab$parNames[i])), fp_text(vertical.align = 'subscript'))))
+  }  
+  prt <- add_header(prt, parNames='Estimated and derived mean values and standard deviations of the parameters used in the model for Greenland Sea harp seals. N70 is 70% of Nmax, Nlim is 30% of Nmax.')
+prt <- merge_at(prt, 1, c(1:(length(partab)-1)), part='header')
+prt <- align(prt, 1, c(1:(length(partab)-1)), 'left', part='header')
+prt <- border_remove(prt)
+prt <- hline_bottom(prt, border = fp_border(style = "solid", width=2), part='body')
+prt <- hline_bottom(prt, border = fp_border(style = "solid", width=1), part='header')
+prt <- hline(prt, i=1, border = fp_border(style = "solid", width=2), part='header')
+prt <- compose(prt, 2, 1, as_paragraph('Parameter'), part='header')
+prt <- align(prt, 2, c(1:length(nrow(prt)$widths)), c('left', rep('center', 2)), part='header')
+prt <- align(prt, c(1:nrow(part)), 1, 'left', part='body')
+prt <- width(prt, c(1:3), 1)
+prt
+} else {
+  part$parNames <- paste0('$', substr(part$parNames, 1, 1), 
+                           '_{', substr(part$parNames, 2, nchar(part$parNames)), '}$')
+  
+    part$Mean[which(part$Mean>10)] <- round(part$Mean[which(part$Mean>10)])
+    part$Mean[which(part$Mean<10)] <- round(part$Mean[which(part$Mean<10)], 2)
+    part$Mean <- format(part$Mean, big.mark = ' ', scientific=F)
+    part$Mean <- gsub('.00', '', part$Mean, fixed=T)
+
+    part$SD[which(part$Mean>10)] <- round(part$SD[which(part$Mean>10)])
+    part$SD[which(part$Mean<10)] <- round(part$SD[which(part$Mean<10)], 2)
+    part$SD <- format(part$SD, big.mark = ' ', scientific=F)
+    part$SD <- gsub('.00', '', part$SD, fixed=T)
+rownames(part) <- c(1:nrow(part))
+names(part)[2] <- 'Parameter'
+pander::pander(part[,-1], style='rmarkdown', split.table=Inf, justify=c('left', rep('right', 2)), caption='Estimated and derived mean values and standard deviations of the parameters used in the model for Greenland Sea harp seals. N70 is 70% of Nmax, Nlim is 30% of Nmax.')
+} 
+
+```
+
+<br/><br/>
+
+```{r catchTab, message=FALSE, warning=FALSE}
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+cOpts <- c('Current level', rep('Equilibrium', 2), rep('Reduce to N70', 2))
+cLevs <- c(rep(round(100*data$CQuota/sum(data$CQuota), 1)[1], 2), 0, round(100*data$CQuota/sum(data$CQuota), 1)[1], 0)
+c0 <- c(data$CQuota[1], round(datEqM$CQuota[1]),
+          round(datEq$CQuota[1]), round(dat70M$CQuota[1]),
+          round(dat70$CQuota[1])) 
+c1 <- c(data$CQuota[2], round(datEqM$CQuota[2]),
+          round(datEq$CQuota[2]), round(dat70M$CQuota[2]),
+          round(dat70$CQuota[2])) 
+cTot <- c0+c1
+
+D <- round(c(partab$Mean[7], partEqM$Mean[7],
+             partEqM$Mean[7], part70M$Mean[7],
+             part70$Mean[7]), 2)
+Dlc <- round(D-(1.96*c(partab$SD[7], partEqM$SD[7],
+             partEqM$SD[7], part70M$SD[7],
+             part70$SD[7])), 2)
+Duc <- round(D+(1.96*c(partab$SD[7], partEqM$SD[7],
+             partEqM$SD[7], part70M$SD[7],
+             part70$SD[7])), 2)
+
+cTab <- data.frame(cOpts, cLevs, c0, c1, cTot, Dlc, D, Duc)
+names(cTab) <- c('Catch option', 'Percent pups', 'Pup catch', '1+ catch', 'Total catch', '2.5%', 'Mean', '97.5%')
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+if(doc.type=='docx') {
+  require(flextable)
+  require(officer)
+  cTab[,2] <- paste0(round(cTab[,2], 1), '%')
+  for(i in 3:5) {
+    cTab[,i] <- format(round(cTab[,i]), big.mark=' ', digits=0, scientific=F)
+  }
+  for(i in c(6:8)) {
+    cTab[,i] <- format(round(cTab[,i], 2), big.mark='', digits=2)
+  }
+  
+  ct <- flextable(cTab)
+  ct <- width(ct, 1, 1.5)  
+  ct <- width(ct, c(6:8), 0.5)
+  ct <- compose(ct, c(4,5),1,as_paragraph(as_chunk('Reduce to N', fp_text()), as_chunk('70', fp_text(vertical.align = 'subscript'))))
+  ct <- add_header(ct, '2.5%'='D1+')
+  ct <- compose(ct, 1,6,as_paragraph(as_chunk('D', fp_text()), as_chunk('1+', fp_text(vertical.align='subscript'))), part='header')
+  ct <- merge_at(ct, 1, c(6:8), part='header')
+  ct <- align(ct, 1, c(6:8), 'center', part='header')
+
+  ct <- add_header(ct, 'Catch option'='Catch options with relative 1+ population size (D1+) in 15-years (2035) for harp seals in the Greenland Sea.')
+  ct <- merge_at(ct, 1, c(1:(length(cTab)-1)), part='header')
+  ct <- align(ct, 1, c(1:(length(cTab)-1)), 'left', part='header')
+  ct <- border_remove(ct)
+  ct <- hline_bottom(ct, border = fp_border(style = "solid", width=2), part='body')
+  ct <- hline_bottom(ct, border = fp_border(style = "solid", width=1), part='header')
+  ct <- hline(ct, i=1, border = fp_border(style = "solid", width=2), part='header')
+ct <- hline(ct, 2, c(6:8), border = fp_border(style = "solid", width=1), part='header')
+ct <- align(ct, c(1:nrow(cTab)), 1, 'left', part='body')
+ct <- align(ct, 3, 1, 'left', part='header')
+ct <- align(ct, c(1:nrow(cTab)), c(2:length(cTab)), 'center', part='body')
+ct <- align(ct, 3, c(2:length(cTab)), 'center', part='header')
+ct
+} else {
+  cTab$`Catch option` <- as.character(cTab$`Catch option`)  
+  cTab$`Catch option`[c(4,5)] <- 'Reduce to N70'
+  ct <- knitr::kable(cTab, format='latex', booktabs=T, align=c('l', rep('r', 7)), format.args=list(big.mark = ' '), caption='Catch options with relative 1+ population size (D1+) in 15-years (2035) for harp seals in the Greenland Sea.')
+  ct <- kableExtra::add_header_above(ct, c(' '=5, 'D1+'=3))
+  ct
+}
+```
+
+
+\newpage
+
+```{r plotN, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Modelled population trajectories for Greenland Sea harp seal pups and adults (full lines), 95\\% confidence intervals (shaded areas) and future projections (dashed lines). N70, N50, and Nlim denote the 70\\%, 50\\%, and 30\\% of the historical maximum population size, respectively. Observed pup production estimates are indicated by filled circles.'}
+par(mfrow=c(1,2))
+plot.N(yLim=c(0, 7e+05))
+plot.N(component='N0', xLim=c(1980, 2035), yLim=c(0, 200000))
+```
+
+
+```{r plotNMF, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Modelled population trajectories for Greenland Sea harp seal pups and adults using mean Fecundity throughout time series'}
+par(mfrow=c(1,2))
+plot.N(resMF, datMF, yLim=c(0, 7e+05))
+plot.N(resMF, datMF, component='N0', xLim=c(1980, 2035), yLim=c(0, 200000))
+```
+
+
+
+\newpage
+
+```{r annComp, eval=T, include=T, echo=F, message=F, warning=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=5, fig.cap='Comparison of estimated pup abundance trajectories based on data available in 2016 and 2019'}
+
+library(RColorBrewer)
+
+  add.alpha <- function(col, alpha=1){
+    if(missing(col))
+      stop("Please provide a vector of colours.")
+    apply(sapply(col, col2rgb)/255, 2, 
+          function(x) 
+            rgb(x[1], x[2], x[3], alpha=alpha))  
+  }
+
+df <- data.frame(Year=res$years, N0=res$rep.matrix[res$indN0,1],
+                 N1=res$rep.matrix[res$indN1,1], NTot=res$rep.matrix[res$indNTot,1],
+                 N0.SD=res$rep.matrix[res$indN0,2], N1.SD=res$rep.matrix[res$indN1,2],
+                 NTot.SD=res$rep.matrix[res$indNTot,2])
+
+df$N0.L <- df$N0-(1.96*df$N0.SD)
+df$N0.U <- df$N0+(1.96*df$N0.SD)
+df$N1.L <- df$N1-(1.96*df$N1.SD)
+df$N1.U <- df$N1+(1.96*df$N1.SD)
+df$NTot.L <- df$NTot-(1.96*df$NTot.SD)
+df$NTot.U <- df$NTot+(1.96*df$NTot.SD)
+
+df16 <- data.frame(Year=res16$years, N0=res16$rep.matrix[res16$indN0,1],
+                 N1=res16$rep.matrix[res16$indN1,1], NTot=res16$rep.matrix[res16$indNTot,1],
+                 N0.SD=res16$rep.matrix[res16$indN0,2], N1.SD=res16$rep.matrix[res16$indN1,2],
+                 NTot.SD=res16$rep.matrix[res16$indNTot,2])
+
+df16$N0.L <- df16$N0-(1.96*df16$N0.SD)
+df16$N0.U <- df16$N0+(1.96*df16$N0.SD)
+df16$N1.L <- df16$N1-(1.96*df16$N1.SD)
+df16$N1.U <- df16$N1+(1.96*df16$N1.SD)
+df16$NTot.L <- df16$NTot-(1.96*df16$NTot.SD)
+df16$NTot.U <- df16$NTot+(1.96*df16$NTot.SD)
+
+par(mfrow=c(1,2))
+plot(NTot~Year, data=df16, type='l', lwd=2, lty=2, col=brewer.pal(8, 'Dark2')[8],
+     xlab='', ylab='Total abundance', ylim=c(0, max(df16$NTot.U)),
+     xlim=c(1946, 2035), axes=F)
+axis(1)
+axis(2)
+abline(v=par('usr')[1])
+abline(h=par('usr')[3])
+
+lines(NTot~Year, data=df16[which(df16$Year<=2016),], lwd=2, col=brewer.pal(8, 'Dark2')[8])
+polygon(c(df16$Year[which(df16$Year<=2016)], rev(df16$Year[which(df16$Year<=2016)])),
+        c(df16$NTot.L[which(df16$Year<=2016)], rev(df16$NTot.U[which(df16$Year<=2016)])),
+        col=add.alpha(brewer.pal(8, 'Dark2')[8], 0.5), border=F)
+lines(NTot.L~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+lines(NTot.U~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+
+lines(NTot~Year, data=df, type='l', lwd=2, lty=2, col=brewer.pal(3, 'Dark2')[1])
+lines(NTot~Year, data=df[which(df$Year<=2019),], lwd=2, col=brewer.pal(3, 'Dark2')[1])
+polygon(c(df$Year[which(df$Year<=2019)], rev(df$Year[which(df$Year<=2019)])),
+        c(df$NTot.L[which(df$Year<=2019)], rev(df$NTot.U[which(df$Year<=2019)])),
+        col=add.alpha(brewer.pal(3, 'Dark2')[1], 0.5), border=F)
+lines(NTot.L~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[1])
+lines(NTot.U~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[1])
+legend('topleft', lwd=2, col=brewer.pal(8, 'Dark2')[c(8,1)], c('2016 dataset', '2019 dataset'), bty='n')
+
+
+plot(N0~Year, data=df16, type='l', lwd=2, lty=2, col=brewer.pal(8, 'Dark2')[8],
+     xlab='', ylab='Pup abundance', ylim=c(0, max(df16$N0.U)),
+     xlim=c(1946, 2035), axes=F)
+axis(1)
+axis(2)
+abline(v=par('usr')[1])
+abline(h=par('usr')[3])
+
+lines(N0~Year, data=df16[which(df16$Year<=2016),], lwd=2, col=brewer.pal(8, 'Dark2')[8])
+polygon(c(df16$Year[which(df16$Year<=2016)], rev(df16$Year[which(df16$Year<=2016)])),
+        c(df16$N0.L[which(df16$Year<=2016)], rev(df16$N0.U[which(df16$Year<=2016)])),
+        col=add.alpha(brewer.pal(8, 'Dark2')[8], 0.5), border=F)
+lines(N0.L~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+lines(N0.U~Year, data=df16, type='l', lty=2, col=brewer.pal(8, 'Dark2')[8])
+
+lines(N0~Year, data=df, type='l', lwd=2, lty=2, col=brewer.pal(3, 'Dark2')[2])
+lines(N0~Year, data=df[which(df$Year<=2019),], lwd=2, col=brewer.pal(3, 'Dark2')[2])
+polygon(c(df$Year[which(df$Year<=2019)], rev(df$Year[which(df$Year<=2019)])),
+        c(df$N0.L[which(df$Year<=2019)], rev(df$N0.U[which(df$Year<=2019)])),
+        col=add.alpha(brewer.pal(3, 'Dark2')[2], 0.5), border=F)
+lines(N0.L~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[2])
+lines(N0.U~Year, data=df, type='l', lty=2, col=brewer.pal(3, 'Dark2')[2])
+
+segments(data$pupProductionData[,1], data$pupProductionData[,2]-(1.96*(data$pupProductionData[,2]*data$pupProductionData[,3])),data$pupProductionData[,1], data$pupProductionData[,2]+(1.96*(data$pupProductionData[,2]*data$pupProductionData[,3])))
+points(data$pupProductionData[,1], data$pupProductionData[,2],
+       pch=21, bg=brewer.pal(8, 'Dark2')[8])
+points(tail(data$pupProductionData[,1],1), tail(data$pupProductionData[,2],1),
+       pch=21, bg=brewer.pal(3, 'Dark2')[2])
+
+legend('topleft', lwd=2, col=brewer.pal(8, 'Dark2')[c(8,2)], c('2016 dataset', '2019 dataset'), bty='n')
+       
+```

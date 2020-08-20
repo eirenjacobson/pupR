@@ -633,10 +633,10 @@ printGAM2screen <- function(estimates,
   #Print results to screen
   if("harp" %in% population){
     #Print results to screen
-    cat("-------------------------------------------------------------")
+    cat("-------------------------------------------------------------\n")
     cat("Estimates of harp seal pup production using the GAM method \n")
-    cat(paste("Estimate without readers error correction: ",round(estimates$EstHarpGAMFinal,digits = 0)," , SE = ",round(sqrt(estimates$VarTotalHarpGAM),digits = 0),", CV = ",round(100*sqrt(estimates$VarTotalHarpGAM)/estimates$EstHarpFinalGAM,digits = 1),"%\n"))
-    cat(paste("Estimate with readers error correction: ",round(estimates$EstHarpGAMFinalCorr,digits = 0)," , SE = ",round(sqrt(estimates$VarTotalHarpGAMCorr),digits = 0),", CV = ",round(100*sqrt(estimates$VarTotalHarpGAMCorr)/estimates$EstHarpFinalGAMCorr,digits = 1),"%\n"))
+    cat(paste("Estimate without readers error correction: ",round(estimates$EstHarpGAMFinal,digits = 0)," , SE = ",round(sqrt(estimates$VarTotalHarpGAM),digits = 0),", CV = ",round(100*sqrt(estimates$VarTotalHarpGAM)/estimates$EstHarpGAMFinal,digits = 1),"%\n"))
+    cat(paste("Estimate with readers error correction: ",round(estimates$EstHarpGAMFinalCorr,digits = 0)," , SE = ",round(sqrt(estimates$VarTotalHarpGAMCorr),digits = 0),", CV = ",round(100*sqrt(estimates$VarTotalHarpGAMCorr)/estimates$EstHarpGAMFinalCorr,digits = 1),"%\n"))
     cat("-----------------------------------------------------------\n")
   }
   if("hood" %in% population){
@@ -702,23 +702,23 @@ GAMestimate <- function(harpcounts = NA,
   #HarpGam <- gam(HarpFinalCounts ~ s(xycord$x,xycord$y)+offset(log.area),family=negbin(c(0.1,10)),method=gam.method(gam="outer"),gamma = 1.4)
   if("harp" %in% population){
     cat("\n Fitting GAM to harp pup counts...\n")
-    if("negbin" %in% distr) HarpGam <- bam(harpcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
+    if("negbin" %in% distr) HarpGam <- mgcv::bam(harpcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
 
       #HarpGam <- gam(HarpFinalCounts ~ s(x,y)+offset(log.area),data = data,family=negbin(c(0.1,10)),optimizer = "perf",gamma = 1.4)
     #HarpGam$family$getTheta() #Check estimate
-    if("poisson" %in% distr) HarpGam <- gam(harpcounts ~ s(x,y)+offset(log.area),data = data,family="poisson",gamma = 1.4)
+    if("poisson" %in% distr) HarpGam <- mgcv::gam(harpcounts ~ s(x,y)+offset(log.area),data = data,family="poisson",gamma = 1.4)
   }
 
   #HoodedGam <- gam(HoodedFinalCounts ~ s(xycord$x,xycord$y)+offset(log.area),family=negbin(c(0.1,10)),method=gam.method(gam="outer"),gamma = 1.4)
   if("hood" %in% population){
     cat("\n Fitting GAM to hooded pup counts...\n")
 
-    if("negbin" %in% distr) HoodedGam <- bam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
+    if("negbin" %in% distr) HoodedGam <- mgcv::bam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
 
       #HoodedGam <- gam(HoodedFinalCounts ~ s(x,y)+offset(log.area),data = data,family=negbin(c(0.1,10)),optimizer = "perf",gamma = 1.4)
 
     #HoodedGam$family$getTheta() #Check estimate
-    if("poisson" %in% distr) HoodedGam <- gam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family="poisson",gamma = 1.4)
+    if("poisson" %in% distr) HoodedGam <- mgcv::gam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family="poisson",gamma = 1.4)
   }
 
   cat("\n Creating area mesh grid...\n")

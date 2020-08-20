@@ -1,0 +1,1033 @@
+---
+title: "Estimation of pup production of harp and hooded seals in the Greenland Sea in 2018"
+author: "Martin Biuw, Tor Arne Øigård, Kjell Tormod Nilssen, Garry Stenson, Lotta Lindblom, Michael Poltermann, Martin Kristianssen & Tore Haug"
+date: "Draft: `r format(Sys.time(), '%Y-%m-%d')`"
+
+##output: word_document
+#    reference_docx: 'C:/Users/a5406/Documents/DocumentTemplates/WordTemplate.docx'
+
+output: 
+##  bookdown::pdf_document2:
+  bookdown::word_document2:
+    toc: no
+    reference_doc: 'C:/Users/a5406/Documents/Custom Office Templates/WordTemplateWGHARP.dotx'
+##    latex_engine: xelatex
+
+##output: 
+##  pdf_document:
+##    latex_engine: xelatex
+always_allow_html: yes
+bibliography: 'C:/Users/a5406/Documents/Articles/library.bib'
+csl: 'ices-journal-of-marine-science.csl'
+##biblio-style: apalike
+##biblio-style: harvard
+header-includes: 
+  \usepackage{float}
+  \usepackage{gensymb}
+  \usepackage{circ}
+  \usepackage{caption}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval=T)
+```
+
+```{r functions, include=FALSE, eval=TRUE}
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/read.eo.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/find.transects.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/image.dim.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/sum.image.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/read.counts.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/kingsley.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/stageCorrection.R')
+source('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/degree.R')
+```
+
+```{r readEOdf, cache=T, update.cache=F, message=FALSE, warning=FALSE}
+load('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/eo.35002.RData')
+load('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/eo.35003.RData')
+load('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/eo.35004.RData')
+
+
+areas <- read.csv('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/photo.areas.csv', stringsAsFactors=F)
+areas$IMAGE_ID <- gsub('.tif', '', areas$IMAGE_ID, fixed=T)
+
+eo.35002$data <- merge(eo.35002$data, areas, by.x='Event.ID', by.y='IMAGE_ID', all.x=T, all.y=F)
+
+eo.35003$data <- merge(eo.35003$data, areas, by.x='Event.ID', by.y='IMAGE_ID', all.x=T, all.y=F)
+
+eo.35004$data <- merge(eo.35004$data, areas, by.x='Event.ID', by.y='IMAGE_ID', all.x=T, all.y=F)
+
+eo.all <- rbind(eo.35002$data, eo.35003$data, eo.35004$data)
+
+batches <- unique(unlist(lapply(eo.all$transect, function(x) unlist(strsplit(x, '_'))[1])))
+batches <- batches[which(!is.na(batches))]
+t.num <- c(1:100)
+tlevels <- expand.grid(t.num, batches)[,c(2,1)]
+tlevels <- apply(tlevels, 1, function(x) paste(x[1], x[2], sep='_'))
+tlevels <- gsub(' ', '', tlevels)
+eo.all$transect <- factor(eo.all$transect, levels=tlevels)
+eo.all$transect <- droplevels(eo.all$transect)
+```
+
+
+```{r readCounts, cache=T, update.cache=F, message=FALSE, warning=FALSE}
+cnt.dir <- 'Q:/ishavssel/PhotoReading/CountFiles'
+mp <- read.counts(paste(cnt.dir, 'MP_MP_count.shp', sep='/'))
+ll <- read.counts(paste(cnt.dir, 'LottaL_LL_count.shp', sep='/'))
+lld <- read.counts(paste(cnt.dir, 'LottaL_start_LL_count.shp', sep='/'))
+mpd <- read.counts(paste(cnt.dir, 'MP_MP_double.shp', sep='/'))
+
+names(mp)[length(names(mp))] <- 'NOTES'
+names(mpd)[length(names(mpd))] <- 'NOTES'
+```
+
+```{r readAllImageList, cache=T, update.cache=F, message=F, warning=F}
+
+all.ind <- rbind(ll, mp)
+all.ind <- merge(all.ind, eo.all[,c(1,22,24)], by.x='PHOTO_ID', by.y='Event.ID', all.x=T, all.y=F)
+all.ind$Date <- as.POSIXct(strptime(format(all.ind$UTC, '%Y-%m-%d'), '%Y-%m-%d'), tz='UTC')
+
+mp.counts <- sum.image.list(ims=eo.all$Event.ID)
+ll.counts <- sum.image.list(ll, ims=eo.all$Event.ID)
+
+pup.counts <- data.frame(PHOTO_ID=mp.counts$PHOTO_ID,
+                         HarpPup=mp.counts$HarpPup+ll.counts$HarpPup,
+                         HoodPup=mp.counts$HoodPup+ll.counts$HoodPup)
+
+pup.counts$PHOTO_ID <- as.character(pup.counts$PHOTO_ID)
+
+## Merge with image data:
+pup.counts <- merge(pup.counts, eo.all[,which(names(eo.all) %in% c("Event.ID", "Grid.Easting", "Grid.Northing", "Latitude", "Longitude", "UTC", "lt", "H", "W", "transect", "area"))], by.x='PHOTO_ID', by.y='Event.ID', all.x=T, all.y=F)
+```
+
+
+
+```{r readDoubleImageList, cache=T, update.cache=F, message=FALSE, warning=FALSE}
+library(XLConnect)
+
+double <- readWorksheetFromFile('Q:/ishavssel/PhotoReading/DoubleCounting.xlsx', 1)
+
+mp.sum <- sum.image.list()
+mpd.sum <- sum.image.list(mpd)
+ll.sum <- sum.image.list(ll)
+lld.sum <- sum.image.list(lld)
+
+harp.double <- data.frame(PHOTO_ID=double$Image_ID, 
+                          LL=ll.sum$HarpPup+lld.sum$HarpPup,
+                          MP=mp.sum$HarpPup+mpd.sum$HarpPup)
+
+hood.double <- data.frame(PHOTO_ID=double$Image_ID, 
+                          LL=ll.sum$HoodPup+lld.sum$HoodPup,
+                          MP=mp.sum$HoodPup+mpd.sum$HoodPup)
+lm.harp <- lm(LL~MP, data=harp.double)
+pred.harp <- predict(lm.harp, newdata=data.frame(MP=c(0:60)), 
+                     se.fit=T, interval='prediction')
+
+lm.hood <- lm(LL~MP, data=hood.double)
+pred.hood <- predict(lm.hood, newdata=data.frame(MP=c(0:60)), 
+                     se.fit=T, interval='prediction')
+```
+
+```{r makeSurveys, cache=T, update.cache=F, message=FALSE, warning=FALSE}
+
+pup.counts$survey <- rep(1, nrow(pup.counts))
+pup.counts$survey[grep('35004', pup.counts$PHOTO_ID)] <- 2
+which.batch <- grep('35004', pup.counts$PHOTO_ID)
+which.transects <- which(as.numeric(unlist(lapply(as.character(pup.counts$transect), function(x) unlist(strsplit(x, '_'))[2])))>23)
+pup.counts$survey[intersect(which.batch, which.transects)] <- 3
+
+survey <- pup.counts[which(!is.na(pup.counts$transect)),]
+##save(survey, file='~/survey.RData')
+```
+
+# ABSTRACT
+
+Pup production of the Greenland Sea populations of harp and hooded seals were estimated based upon aerial surveys in March 2018. One fixed wing aircraft was used for reconnaissance flights to identify the whelping concentrations and to carry out photographic surveys along systematic transects over the whelping areas. A helicopter, operated from the Norwegian Coastguard icebreaker *“KV Svalbard”*, flew reconnaissance flights, deployed GPS beacons within the concentrations, monitored the movements of seal patches and performed age-staging of the pups. The estimated pup production of harp seals was 54 181 (SE=9 236, CV=17%), which is significantly lower than estimates obtained in similar surveys in 2002, 2007 and 2012. Estimated hooded seal pup production was 12 977 (SE=1 823, CV=14%), which is lower than estimates obtained from comparable surveys in 2005 and 2007, but similar to estimates from the most recent survey in 2012.
+
+# INTRODUCTION
+
+Estimating population abundance from of animals in the wild using catch-at-age data, sequential population models and mark-recapture data is associated with several underlying assumptions, each with substantial uncertainties associated with them. Independent estimates of pup production, using aerial photo or visually based strip transect methods, have been recommended and used to provide the basis for estimates of total abundance of harp (*Pagophilus groenlandicus*) and hooded (*Cystophora cristata*) seals both in the northwest Atlantic [@Bowen1987; @Hammill1992; @Stenson1993; @Stenson1997; @Stenson2002; @Stenson2003; @Stenson2005; @Stenson2006; @Stenson2010], in the Greenland Sea [@Øritsland1995; @Haug2006; @ICES2006a; @Salberg2008; @Øigård2010; @Øigård2014a; @Øigård2014b] and in the White Sea [@Potelov2003; @ICES2016]. Total population size and status of the stocks is subsequently assessed by fitting population models, which incorporate annual reproductive rates and removals, to the independent estimates of pup production [e.g. @Healey2000; @Hammill2007; @Skaug2007; @Øigård2014a; -@Øigård2014b; @ICES2016]. 
+
+Both harp and hooded seal pup production were last assessed in the Greenland Sea in 2012 [@Øigård2014a; -@Øigård2014b]. The ICES management requires that these populations are defined as “data rich” [@ICES2006b]. Data rich stocks require that a time series of at least three pup production estimates should be available spanning a period of 10-15 years with surveys separated by 2-5 years. The most recent abundance estimates should be prepared from pup production estimate surveys and supporting data on fertility (also no more than 5 years old) and catch statistics. The original plan was to conduct a new survey of the Greenland Sea harp and hooded seal stocks in 2017, to ensure these stocks met the data rich criterion. However, due to practical logistical issues this survey was postponed to 2018.  
+
+The harp seal was the prime target species for the surveys, since this population is still hunted. However, due to low hooded seal pup production numbers observed in recent decades [@ICES2006a; -@ICES2016], this species has been protected since 2007. The last survey (in 2012), did not show any signs of recovery [@ICES2016], a new survey after a period of ~5 years was required in order to to assess the effect of protection on the pup production due to the usually 4-5 years age at maturity observed in hooded seals [see @Frie2012]. One secondary goal of this latest survey was therefore to obtain a new abundance estimate for hooded seals in the area. Given restricted logistical resources and the priority of harp seals, the possibility of obtaining a hooded seal pup production estimate would require that hooded seal breeding occurred within the same main areas as the harp seal breeding.  During course of this survey it proved possible to obtain data of pup production for both species.
+
+
+# MATERIALS & METHODS
+
+## Logistics
+An ice-strengthened expedition vessel was used for operations in the Greeland Sea drift ice. The ship was equipped with a helicopter platform and equipment in compliance with relevant requirements for helicopter operations. 
+ 
+An Ecureuil AS 350 B1 helicopter was chartered for the expedition and was used to conduct reconnaissance flights, to monitor the distribution of seal patches and to perform age-staging of the pups. A fixed-wing twin engine Twin Otter aircraft (TF-POF) was used to conduct reconnaissance and photographic surveys. The aircraft was based at Akureyri (Iceland) and at Constable Pynt airport (Nerlerit Inaat, 50 km north of Scoresbysound, East Greenland). 
+
+## Reconnaissance surveys
+
+The ice cover in 2018 was considerably reduced compared to previou surveys on 2007 [@Øigård2010]and 2012 [@Øigård2014a; -@Øigård2014b], with the edge of the pack ice located closer to the East Greenland coast. In addition to revisiting all areas historically used by harp and hooded seals for breeding purposes in the Greenland Sea [see @Haug2006; @Salberg2008; @Øigård2010; -@Øigård2014a; -@Øigård2014b], reconnaissance flights also covered areas to the north and south of these historical core areas, to account for potential distributional changes over time.  
+
+Reconnaissance flights were flown at an altitude of 160-300m and transects were adapted to the actual ice-configuration during the survey period, with the ice edge generally delineating the eastern end and areas of fast ice or large ice sheets making up the western end. Due to the significant southward ice drift that occurrred in the region, and a pupping period that often spans several weeks [mid to late March, see @Rasmussen1960; @Øritsland1964; @Øritsland1995; @ICES1998; @Haug2006; @Salberg2008; @Øigård2010; -@Øigård2014a; -@Øigård2014b], most areas were surveyed repeatedly to minimize the chance of missing whelping concentrations. Color markers and 5 satellite based GPS beacons were deployed in and around the major whelping concentrations to facilitate relocation and to monitor ice drift. 
+
+The vessel encountered the ice edge at 72º30’N / 17º55’W on March 17^th^, and remained within the open pack ice to survey the region between 72º20’N to 73º14’N from ship and helicopter. Due to restricted time availabile for the survey, the vessel started moving southwards through a large whelping patch of both harp and hooded seals on March 23^rd^. At the assumed southern edge of this patch, a beacon was deployed on the ice from the vessel (position to72º19’N / 17º39’W), whereafter the vessel left the ice and returned to Norway. 
+
+Helicopter reconnaissance flights were flown from the ship between March 18^th^ and 22^nd^ in areas between 71º25’N and 73º40’N, as repeated systematic east-west transects between the ice edge in the east and areas of unsuitable (often fast) ice in the west. Transects were usually spaced 5 nm apart, with a length of 10-30 nm, and were modified according to the actual ice distribution during the individual survey flights.
+
+The Twin Otter could cover much larger areas than the helicopter and was used to search for potential seal whelping areas within the drift ice outside of the historical core area, from 68°40’N/24°50’W to 74°47’N/ 13°58’W during the period 18^th^-30^th^ March. These reconnaissance flights also followed east-west transects usually spaced 10 nm, although spacing was decreased to 5 nm in areas where seals were observed. In the north, reconnaissance was flown more in relation to ice distribution (also covering some areas of open water), and occasionally restricted due to fog banks covering parts of the area.
+
+## Photographic surveys
+
+The Twin Otter was equipped with a digital camera (Phase One IXU-RS-1000 / Lens: Rodenstock 50 mm f/4.0). Images were taken at an altitude that was maintained at 1100 ft (335 m) using a radar altimeter, and at a flight speed of approximately 130 knots. The camera was operated to cover 80-90 % of the area along each transect line, with deliberate spacing between adjacent images to avoid overlap and the potential for double counting. The image footprint was 347m (cross track) x 260 m (flight direction), with a pixel ground resolution of approximately 29 mm. Transects were flown along east-west lines at a latitudinal spacing of 1-3 nm.
+
+The ship and helicopter were used to define the geographic range of the whelping patches prior to the fixed-wing aircraft photographic survey. The GPS beacons deployed on the ice was used to guide the aircraft to the patches, since the ship and helicopter were forced to depart from the ice prior to the optimal time for the photographic surveys. Cameras were turned on when seals were observed on a transect line. Cameras were turned off when the transect line ended at the eastern ice edge, or when no seals were observed for an extended period along the line to the west.
+
+## Photographic counts
+
+All photos were orthorectified to Universal Transverse Mercator projection (UTM, zone 32N). They were analysed by two experienced readers, using custom-made routines in the QGIS GIS package [@QGISDevelopmentTeam2016]. 
+
+After reading all photographs, the readers re-read a series of their photographs in sequence to determine if identifications had improved over the course of the readings. Photos were read until the second readings were consistently within 1% of the first. The original readings were replaced with the second readings up to this point. Additional photos were read subsequently to ensure that the first and second reading were consistent.
+
+To correct for misidentified pups, a number of photos were selected from one reader and read by the other reader. Initial comparison of these readings revealed a relatively consistent difference between the readers, with one reader consistently overlooking seals than were identified by the other reader (and confirmed by a third independent reader). To obtain a corrected estimate for this reader, we fitted a linear model of the form:
+
+$$n^{r1}_{j,k} = \alpha+\beta n^{r2}_{j,k}+\epsilon_{j,k}$$
+
+where $n^{r1}_{j,k}$ is the counts by the less imprecise reader for the $k$th photograph in the $j$th transect, $n^{r2}_{j,k}$ is the counts to be corrected from the other reader, $\alpha$ is the estimated intercept, $\beta$ is the estimated slope, and $\epsilon_{j,k}$ represents a residual error term assumed to be normally distributed with zero mean and standard deviation.  Using the estimated parameters we applied a linear correction model for each of the original counts:
+
+$$\hat{n}^{r2}_{j,k}=\alpha+\beta n^{r2}_{j,k}$$
+
+The measurement error for each photo associated with predicting the best estimate follows naturally by:
+
+$$\epsilon_{j,k}=\sigma^2+var(\alpha)+2cov(\alpha,\beta)n^{r2}_{j,k}+var(\beta)(n^{r2}_{j,k})^2$$
+
+where $var(\alpha)$ is the variance of the intercept, $var(\beta)$ is the variance of the slope, and $cov(\alpha,\beta)$ is the covariance between the intercept and the slope.
+
+## Pup production estimation
+The photographic surveys were based on a systematic sampling design with a single random start and a sampling unit of transects of variable length. The estimated number of pups on the ice at the time of survey may be written as [@Salberg2008; @Øigård2010]:
+
+$$\hat{N}=T\sum_{j=1}^{J}W_jx_j$$
+where $W_j=l_j/A_j$, $A_j$ is the area covered of all photographs on transect $j$, $l_j$ is the length of transect $j$, $J$ is the total number of transects, and $x_j=\sum_{k=1}^{P_{ij}}\hat{n}_{j,k}$ is the sum of the corrected counts on transect $j$. The number of photos on the $j$th transect is $P_j$ and $T$ is the spacing between transects in the survey. This estimator takes into account changes in transect width along transects and between transects due to changes in flight altitude.
+The estimates of error variance $V^s$, based on serial differences between transects were calculated as [@Salberg2008]:
+
+$$V^s=\frac{TJ}{2(J-1)}\Biggl(T-\frac{\sum_{j=1}^{J}A_j}{\sum_{j=1}^{J}l_j}\Biggr)\sum_{j=1}^{J}l_j(W_jx_j-W_{j+1}x_{j+1})^2$$
+This estimator assumes that the mean is constant between two neighboring transects. For the seal pup data this assumption is often not valid due to clustered data, and we will have an unwanted contribution from the difference between the transect count mean values which causes an overestimate of the variance of the pup production estimate [@Cochran1977]. However, if the seals are homogenously spread over a large area this assumption is fine. 
+
+The variance associated with mis-classification of pups, i.e., readers errors, for the whole survey is then [@Salberg2008]:
+
+$$\begin{aligned} V^{meas}=T^2\Biggl[\sum_{j=1}^{J}W^2_jP_j\sigma^2+\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr)^2var(\alpha)+2cov(\alpha,\beta)\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr) \\ \Biggl(\sum_{j=1}^{J}Wj\sum_{k=1}^{P_j}n_{j,k}\Biggr)+var(\beta)\Biggl(\sum_{j=1}^{J}Wj\sum_{k=1}^{P_j}n_{j,k}\Biggr)^2\Biggr] \end{aligned}$$
+
+If the intercept term is not statistically significant on a specified level it could be dropped from the linear correction model. The variance expression is then simplified to
+
+$$V^{meas}=T^2\Biggl[\sum_{j=1}^{J}W^2_jP_j\sigma^2+\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr)^2\Biggr]$$
+ 
+To obtain the total sampling variance of the survey, the variance associated with the mis-identification corrections $V^{meas}$ was added to the sampling variance $V^s$, i.e.:
+
+$$V=V^s+V^{meas}$$
+
+
+## Pup visibility to aerial surveys
+### Temporal distribution of births
+To correct the estimates of abundance for seal pups that had left the ice or were not yet born at the time of the survey, it was necessary to estimate the distribution of births over the pupping season. This was done by using information on the proportion of pups in seven distinct age-dependent stages. These easily recognizable descriptive age categories were based on pelage colour and body condition, overall appearance, and muscular coordination, as described for the northwest Atlantic harp seals by [@Stewart1980]:
+
+1. Newborn: Pup still wet, bright yellow colour often present. Often associated with wet placentas and blood stained snow. 
+2. Yellowcoat: Pup dry, yellow amniotic stain still persistent on pelt. The pup is lean and moving awkwardly.
+3. Thin whitecoat: Amniotic stain faded, pup with visible neck and often conical in shape, pelage white.
+4. Fat whitecoat: Visibly fatter, neck not visible, cylindrical in shape, pelage still white.
+5. Greycoat: Darker juvenile pelt beginning to grow in under the white lanugo giving a grey cast to the pelt, “salt-and-pepper”-look in later stages. 
+6. Ragged-jackets: Lanugo shed in patches, at least a handful from torso (nose, tail and flippers do not count). 
+7. Beaters: Fully moulted pups (a handful of lanugo may remain).
+ 
+Prior to the survey, classifications of pup stages were standardized among observers to ensure consistency. To determine the proportion of pups in each stage on a given day, random samples of pups were obtained by flying a series of transects over the patch. Pups were classified from the helicopter hovering just above the animals. The spacing between transects depended on the size of the actual patch. 
+
+A similar procedure was followed for hooded seals where information on the proportion of pups in each of five distinct age-dependent stages was used to assess the temporal distribution of births. 
+These arbitrary, but easily recognizable age categories were based on pelage colour and body condition, overall appearance, and muscular coordination, as described for northwest Atlantic hooded seals by @Bowen1987 and @Stenson1988, and used in the previous surveys in the Greenland Sea [@Salberg2008; @Øigård2010]:
+
+1. Unborn: Parturient females.
+2. Newborn: Skin in loose folds along flanks, fur saturated to wet, entire pelage with yellowish hue, awkward body movements. Mother present. Often associated with wet placentas and blood stained snow. 
+3. Thin blueback: Pup dry, ventrum white, neck well defined, trunk conical in shape. Mother present. Mainly 1-2 days old.
+4. Fat blueback: Ventrum white, neck not distinguishable, trunk fusiform in shape. Mother present. Mainly 2-4 days old.
+5. Solitary blueback: As in fat blueback, but mother not present. Mainly 4 days or older.
+
+Due to a combination of the premature departure of the survey vessel from the ice, and poor weather conditions the days prior to the departure, estimates of the proportion of harp and hooded seal pups in each developmental stage were only obtained for March 21^st^. To partially compensate for the lack of staging data, we also attempted to stage pups in a crude way based on the aerial images obtained (see details below). To obtain an estimate of proportion of seals on ice at the time of the photographic surveys, we used the fitted curves from the 2012 survey (see details below).
+
+### Predicted proportion of pups
+The temporal distribution of births for both harp and hooded seals was estimated using the method developed in @Reed1968 and adapted for modelling the birth distribution for harp and hooded seals in @Bowen1987, and @Myers1989. The life cycles of the seals were assumed to be divided into $k$ identifiable age-dependent stages $S_1,.....,S_k$. Birth takes place into state $S_1$ and the pup then progresses in succession through states $S_1,S_2,....$  until it attains maturity when reaching state $S_k$. All pups reaching state $S_k$ eventually die in that state, either from hunting or natural causes [@Reed1968]. We assumed that for both seal populations the birth rate could be adequately described by a continuous function of time, $m_1(t)$ which denoted the temporal distribution of births. The distribution of births over time was assumed to be a normal distribution with mean value $\mu_1$ and standard deviation $\sigma_1$.
+
+The various development stages are denoted by the subscript $j$, and a pup passes from stage $j$ to stage $j+1$. The stage durations are specified in terms of transition intensity functions $\phi_j(t)$, which is the probability that an animal passes from stage $j$ to $j+1$ in the interval $[\tau,\tau+\Delta t]$ and has survived. Here $\tau$ is the time spent in stage $j$. The stage duration was assumed to be a semi-Markov process, i.e. the transition intensities depend only on the current stage and the time so far spent in that stage [@Bowen1987]. The rate at which pups enter the stage $j$ at time $t$ were denoted by $m_j(t)$ and given by a recurrence relationship @Myers1989:
+
+$$m_j(t)={\int_0^\infty}m_{j-1}(t-\tau)\phi_{j-1}(\tau)d\tau\quad j=1,..,k$$
+ 
+The proportion of pups that will be observed on the ice in stage $j$ at time $t$ is [@Bowen1987; @Myers1989]:
+
+$$n_j(t)={\int_0^\infty}m_{j-1}(t-\tau)\Biggl(1-{\int_0^\tau}\phi(s)ds\Biggr)d\tau$$
+ 
+This equation assumes no pup morality during these stages and that all pups on the ice are visible. In @Bowen1987, -@Bowen2007 and @Myers1989 the transition intensity functions $\phi_j(t)$ were assumed to follow a Gamma distribution with shape parameter $\kappa_j$ and scale parameter $\rho_j$ for stage $j$. The product between the shape parameter and the scale parameter, $\rho_j\kappa_j$, gives the mean duration of stage $j$. 
+The numbers of individuals observed to be of stage $j$ at time $t_i$ were denoted $S_{ij}$. The $S_{ij}$'s were obtained by taking a random sample of the pup abundance and determining the stage of each individual. The predicted proportions of each stage present at time $t_i$,  $P_{ij}$, are calculated as in @Myers1989, i.e. by estimating the parameters $\hat{\mu}_1$ and $\hat{\sigma}_1$ of the birth distribution. The proportion of pups on the ice at time $t$ was estimated using [@Salberg2008; @Øigård2010]:
+
+$$Q(t)={\sum_{j=1}^k}\eta_j(t)$$
+ 
+The estimated variance of the proportion of pups on the ice at a given time was estimated by simulating from the proportion of pups in the various stages obtained from the staging by simulating from a multinomial distribution with $k$ stages [@Salberg2008].
+
+## Total pup production estimate
+To correct for pups still not born, and pups that had left the ice at the time of the photographic survey, the estimated numbers of pups on the ice at the time of the survey were corrected by:
+
+$$\hat{N}^{corr}=\frac{\hat{N}}{\hat{Q}}$$
+ 
+where $\hat{Q}$ is the estimated proportion of pups visible on the photographs at the time of the survey.
+
+The estimates of $N_i$ and $Q$ are independent and therefore the error variance of the estimated total number of pups born in the patch $\hat{N}^{corr}$ may be obtained using the  $\delta$-method [e.g. @Casella1990]:
+
+$$V^{corr}=\Biggl(\frac{1}{Q}\Biggr)^2V\Biggl(\frac{N}{Q^2}\Biggr)V^q$$
+ 
+where $V^q$ is the estimated variance of  $\hat{Q}$.
+
+### Estimating stage progression in 2018
+To make up for the lack of staging surveys in 2018, we used the predicted proportions of pups in each stage in 2012, obtained using the above modelling approach. We assumed that, while the absolute timing of the entire 2018 pupping season may be shifted relative to the 2012 survey, the relative proportions of the different stages followed the same progression over time. We estimated the stage of progression during the 2018 staging surveys on March 21^st^ by comparing the proportions of different stages observed to the predictions from the 2012 model fits, and determining the day on which the absolute difference in proportions was at its minimum, i.e.:
+$$ t^{corr}=\underset{t}{\operatorname {min}}\Biggl({\sum_{j=1}^k}|\eta_j^{obs}-\eta_j^{pred}(t)|\Biggr)\quad\left\{0<t<\infty\right\}$$
+where $\eta_j^{obs}$ is the observed proportion in stage $j$ on March 21^st^, and $\eta_j^{pred}(t)$ is the vector of predicted proportions in stage $j$ over time. Based on the time difference between $t^{corr}$ and the true survey date (i.e. March 21^st)^, we could determine an optimum time correction by which to shift survey timing in 2018 (staging as well as photographic surveys) to equivalent dates, had the 2018 surveys been carried out in 2012. This allowed us to determine the best correction factor, ${\hat{Q}}$, for proportion of seals on ice during photo surveys.  
+
+# RESULTS
+## Identification of whelping areas
+
+Reconnaissance surveys were conducted by Twin Otter (March 18^th^-31^st^) and helicopter (March 18^th^-22^nd^) over the drift ice in the Greenland Sea during the harp and hooded seal pup production surveys (Fig \@ref(fig:HeliFlightTracks)). On March 18^th^, the Twin Otter flew reconnaissance flights along the ice edge from 73º30’N to 74º47’N on 18 March and from 70º26’N to 71º30’N on 19 March, whereas the helicopter covered the area between 71º25’N to 72º20’N on 20 March. Both harp and hooded seal whelping was observed by the fixed-wing in a patch thought to be about 300 animals in approximately 74º00’N / 13º47’W on 18 March. No harp seals were seen on the fixed-wing survey in the southern part of the area, although scattered hooded seal families (defined as adult female and pup, accompanied by adult male waiting to breed) were observed. An area with more concentrated hooded seal families was observed from the helicopter between 71º25’N and 71º33’N, and a beacon was deployed in position 71º30’N / 19º06’W at 1500 hrs Norwegian time (Fig. \@ref(fig:Beacons)) to follow the drift of this potentially emerging patch. However no seal aggregations were found during subsequent reconnaissance flights with the fixed-wing around the southward moving position of this beacon. It is possible that poor weather conditions during the days following the deployment of this beacon may have disintegrated the ice in this region, thus also disrupting the formation of a breeding patch. It is therefore possible that some hooded seals were missed during the final aerial photo surveys, and that the estimated hooded seal pup production is slightly underestimated.  
+
+```{r HeliFlightTracks, echo=FALSE, eval=T, fig.pos='H', out.width='80%', out.height='40%', fig.show='hold', fig.align='center', fig.cap='Reconnaissance surveys conducted by the fixed-wing aircraft (A) and helicopter (B) over the drift ice in the Greenland Sea during the period 18 - 31 March 2018. The purple track in panel B represents helicopter reconnaisance surveys, while the yellow track represents the final photo surveys conducted by the fixed-wing. These are also seen as tight transects in the middle of panel A'}
+
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/FlightHeliTracks.png'))
+```
+
+During helicopter reconnaissance flights on 21 March a large patch of whelping harp and hooded seals was located between 72º25’N and 72º35’N; 14º30’W and 16º00’W. There were signs suggesting that the patch extended considerably southwards from this area, but color markers and GPS beacons were deployed on ice floes at the assumed northern (73º32’N / 15º43’W) and eastern (73º27’N / 14º56’W) edges. The eastern beacon was deployed in more loose ice where breeding harp seals were observed on strips of more dense ice. Subsequent helicopter staging flights in the patch confirmed that breeding seals were distributed more toward the south than initially assumed, and another GPS beacon was deployed in position 73º13’N / 16º33’W on 22 March.
+
+On 23 March, the weather and visibility conditions prevented helicopter operations. The vessel was therefore used to localize the north-south distribution of the patch. Apparently, the northern end was now at position 72º52’N / 16º40’W, which was close to the northernmost GPS beacon. Harp seals dominated this northern part of the patch (down to ca position 72º22’N / 17º20’W) – south of this there were mostly hooded seals. The remaining GPS beacon was deployed in the assumed southern end of the patch in position 72º19’N / 17º39’W, before the vessel left the ice to return to Norway. 
+
+The fixed-wing aircraft continued to conduct reconnaissance surveys after the vessel had left the ice. Based on observations made during these surveys, and information on localization of the identified whelping patches obtained from the ice-deployed GPS beacons, photographic surveys were conducted on 27 and 28 March. Subsequent reconnaissance surveys were conducted during 29 – 31 March to ensure that all whelping patches had been covered by the photographic surveys. 
+
+```{r Beacons, echo=FALSE, eval=T, fig.pos='H', out.width='80%', out.height='40%', fig.show='hold', fig.align='center', fig.cap='Trajectories of five GPS beacons deployed in the vicinity of the whelping grounds identified during helicopter and fixed wing reconnaissance surveys. Yellow lines represent transects during the aerial surveys carried out on March 27 and 28.'}
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/BeaconTrajectories.png'))
+```
+
+```{r BeaconDrift, echo=FALSE, eval=T, warning=F, message=F, fig.pos='H', out.width='100%', dpi=300, out.height='40%', fig.show='hold', fig.align='center', fig.cap='Drift rates of five GPS beacons deployed in the vicinity of the whelping grounds identified during helicopter and fixed wing reconnaissance surveys. The top two panels show the east/west and nort/south components of the drifts respectively, while the bottom panel shows the velocity along the drift direction. Two beacons that remained in the vicinity during the period of aerial surveys (Beacons 3 and 4) are emphasised by bold lines Vertical dashed lines represent March 27 and 28, i.e. the period when aerial photo surveys were carried out'}
+require(rgdal)
+beac <- readOGR('C:/Users/a5406/Documents/Telletokt2018/PhotoReading/R/beacons.shp', verbose=F)
+beac$UTC <- as.POSIXct(strptime(as.character(beac$UTC), '%Y-%m-%d %H:%M:%S'), tz='UTC')
+beaCol <- c('#afcc70', '#5a20d6', '#eb6329', '#4bb6e7', '#61cb83')
+beaCol <- toupper(beaCol)
+beaW <- c(1,1,2,2,1)
+beaT <- c(2,2,1,1,2)
+
+tick1 <- as.POSIXct(strptime(format(min(beac$UTC), '%Y-%m-%d'), '%Y-%m-%d'), tz='UTC')
+tick2 <- as.POSIXct(strptime(format(max(beac$UTC), '%Y-%m-%d'), '%Y-%m-%d'), tz='UTC')
+
+x.tick <- seq(tick1, tick2, by='weeks')
+
+par(mfrow=c(3,1), mar=c(1,4,0,10), oma=c(4,1,1,1), las=1)
+
+plot(vx*(1.852/3.6)~UTC, data=beac, type='n', axes=F, ylim=c(-1, 1),
+     xlab='', ylab='Knots (E:W)')
+abline(h=0, lty=2, col='grey')
+abline(v=range(survey$UTC), lty=2, col='grey')
+invisible(by(beac, beac$Beacon, function(x) lines(vx*(1.852/3.6)~UTC, data=x, col=beaCol[as.numeric(x$Beacon[1])], lwd=beaW[as.numeric(x$Beacon[1])])))
+axis(2)
+box()
+axis.POSIXct(1, at=x.tick, labels='')
+
+plot(vy*(1.852/3.6)~UTC, data=beac, type='n', axes=F, ylim=c(-1, 1),
+     xlab='', ylab='Knots (N:S)')
+abline(h=0, lty=2, col='grey')
+abline(v=range(survey$UTC), lty=2, col='grey')
+invisible(by(beac, beac$Beacon, function(x) lines(vy*(1.852/3.6)~UTC, data=x, col=beaCol[as.numeric(x$Beacon[1])], lwd=beaW[as.numeric(x$Beacon[1])])))
+axis(2)
+box()
+axis.POSIXct(1, at=x.tick, labels='')
+
+plot(v*(1.852/3.6)~UTC, data=beac, type='n', axes=F, ylim=c(0, 1),
+     xlab='', ylab='Knots')
+abline(v=range(survey$UTC), lty=2, col='grey')
+invisible(by(beac, beac$Beacon, function(x) lines(v*(1.852/3.6)~UTC, data=x, col=beaCol[as.numeric(x$Beacon[1])], lwd=beaW[as.numeric(x$Beacon[1])])))
+axis(2)
+box()
+axis.POSIXct(1, at=x.tick, format='%b-%d', xpd=NA)
+legend(par('usr')[2], par('usr')[4], col=beaCol, lwd=beaW, paste0(gsub('sh', 'Beacon ', levels(beac$Beacon)), ' (', format(aggregate(beac$UTC, list(beac$Beacon), min)$x, '%d %B'), ')'), bty='n', xpd=NA)
+```
+
+The ice drift varied substantially throughout the survey period, as seen from the GPS beacons deployed on the ice (Fig. \@ref(fig:Beacons)). Daily displacements of 15-20 nm were recorded (mean velocity: `r round(mean(beac$v*(1.852/3.6), na.rm=T), 2)` kts, max velocity: `r round(max(beac$v*(1.852/3.6), na.rm=T), 2)` kts, Fig \@ref(fig:BeaconDrift)). The trajectories followed a generally south-southwesterly path. However, in the period 27-28 March, when the photo surveys were conducted, the wind shifted from predominantly northerly winds to south to southwesterly winds. This was associated with very complex ice movements within the survey region, as evidenced by dramatically different ice conditions on the two days and the entirely different trajectories of the two GPS beacons that were still in te vicinity of the whelping patch (Fig \@ref(fig:BeaconFlightsSentinel)). 
+
+
+```{r BeaconFlightsSentinel, echo=FALSE, eval=T, fig.pos='H', out.width='80%', out.height='40%', fig.show='hold', fig.align='center', fig.cap='Aerial photo survey tracks and trajectories from two GPS beacons, overlaid on images of ice conditions on the consecutive photo survey days (March 27-28). Dashed lines represent the complete beacon trajectories, while the dots represent paths over the two survey days (dot size increases over time). Both images are from the Synthetic Aperture Radar (SAR) product, the one from March 27 was taken by the Sentinel S1A satellite at 08:11:58 UTC (March 27), and the one from March 28 by the Sentinel S1B satellite at at 13:40:39 UTC, with a ground resolution of ~40 x 120 meters (X x Y)'}
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/BeaconFlightsSentinel.png'))
+```
+
+```{r SentinelOnly, echo=FALSE, eval=F, fig.pos='H', out.width='80%', out.height='40%', fig.show='hold', fig.align='center', fig.cap='Images of ice distribution on March 27 and 28. The image from March 27 (left) was taken by the Sentinel S1A satellite at 08:11:58 UTC, with a ground resolution of ~40 x 120 meters (X x Y). The image from March 28 (right) was merged from two consecutive images taken by the Sentinel S2B satellite at 13:40:39 UTC, with a ground resolution of 10 x 10 meters.'}
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+
+if (doc.type == "docx") { 
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/Sentinels.png'))
+} else {  
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/SentinelS1_20180327.png', 'C:/Users/a5406/Documents/Telletokt2018/SentinelS2B_20180328.png'))
+}  
+```
+
+In general, ice drift further into the pack ice appears to have remained in a mostly southwesterly direction, while the looser pack ice appeared to be strongly affected by the SSE winds, resulting in more northeasterly drift and signs of large-scale rotational movements. This must be investigated more precisely to assess potential overlap between photo surveys on two separate days. 
+
+
+## Temporal distribution of births
+
+```{r stages, eval=TRUE, cache=T, update.cache=F, warning=F, message=F} 
+harpCorrect <- stageCorrection(hoodStage=NA)
+harpTab <- harpCorrect$harpStage[,c(1:9)] 
+names(harpTab)[c(2, 4,5,6,7,8)] <- c('Newborn', 'Thin white', 'Fat white', 'Grey coat', 'Ragged jacket', 'Beater')
+harpTab$Date <- format(harpTab$Date, '%B %d')
+
+hoodCorrect <- stageCorrection(harpStage=NA, repfile='correctHoodStageProps2012.txt')
+hoodTab <- hoodCorrect$hoodStage[,c(1:7)] 
+names(hoodTab)[c(2:6)] <- c('Parturient female', 'Newborn', 'Thin blueback', 'Fat blueback', 'Solitary blueback')
+hoodTab$Date <- format(hoodTab$Date, '%B %d')
+
+flightStages <- table(all.ind$Date, all.ind$STATUS, all.ind$SPECIES_ID)
+
+hoodFlight <- as.data.frame.matrix(flightStages[,,2])
+hoodFlight <- rbind(hoodFlight, apply(hoodFlight, 2, mean))
+hoodFlight$FmMpNb <-hoodFlight$Fm+hoodFlight$Mp+hoodFlight$Nb
+
+hoodFl <- data.frame(Date=paste0('March ', paste(substr(dimnames(flightStages)[[1]], 9,10), collapse='-'), '*'),
+                     Parturient=NA, Newborn=hoodFlight$FmMpNb[nrow(hoodFlight)],
+                     Thin=0, Fat=0, Solitary=hoodFlight$Bb[nrow(hoodFlight)])
+hoodFl[,-1] <- as.integer(hoodFl[,-1])
+hoodFl$Total <- apply(hoodFl[,-1], 1, sum, na.rm=T)
+```
+
+### Harp seals
+The number of pups in individual age-dependent stages are shown in Table \@ref(tab:harpStage).
+
+```{r harpStage, eval=TRUE, warning=F, message=F}
+require(kableExtra)
+require(knitr)
+
+doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+
+if (doc.type == "docx") { 
+  require(flextable)
+  require(officer)
+  for(i in 2:length(harpTab)) harpTab[,i] <- as.integer(harpTab[,i])
+  names(harpTab) <- unlist(lapply(names(harpTab), function(x) unlist(strsplit(x, ' '))[1]))
+  ft <- flextable(harpTab)
+  ft <- add_header(ft, Date='', Newborn='Stages', Yellow='Stages', Thin='Stages', Fat='Stages', Grey='Stages', Ragged='Stages', Beater='Stages', Total='')
+  ft <- height(ft, height=0.3, part='header')
+  ft <- merge_at(ft, 1, c(2:(length(harpTab)-1)), part='header')
+  ft <- add_header(ft, Date='Number of harp seal pups in individual age dependent stages in the Greenland Sea. Numbers obtained during helicopter staging surveys on March 21, 2018', Newborn='', Yellow='', Thin='', Fat='', Grey='', Ragged='', Beater='', Total='')
+  ft <- merge_at(ft, 1, c(1:(length(harpTab))), part='header')
+  ft <- border_remove(ft)
+  ft <- hline_bottom( ft, border = fp_border(style = "solid", width=2), part='body')
+  ft <- hline(ft, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=2, j=c(2:(length(harpTab)-1)), border = fp_border(style = "solid", width=1), part='header')
+  ft <- align(ft, align = "center", part='all')
+  ft <- align(ft, i=1, align = "left", part='header')
+  ft
+} else {
+kableExtra::kable(harpTab, 'latex', booktabs=T, align=c('l', rep('c', 8)), caption='Number of harp seal pups in individual age dependent stages in the Greenland Sea. Numbers obtained during helicopter staging surveys on March 21, 2018') %>% kable_styling(latex_options = 'hold_position') %>%
+  add_header_above(c(' '=1, 'Stages'=length(harpTab)-2, ' '=1))
+}  
+```
+
+To conform to the procedure used in 2012, we used the following binning of the various stages of the harp seal pups:  stage 1 = Newborn/Yellow, stage 2 = Thin white, and stage 3 = Fat white/Greycoat. 
+
+```{r harpStagePlot, eval=TRUE, warning=F, messageache=T, update.cache=F, fig.pos='H', out.extra='', dpi=300, fig.width=8, fig.height=4, fig.cap='(A) Observed 2018 staging proportions (points) and 2012 estimates (lines) of the probability of a harp seal pup being classified as belonging to the various stages, and (B) Predicted proportion of hooded seal pups on ice as a function of time. The shaded area shows how the proportion of pups visible on ice changes during the 24 hours of 28 March when the photographic survey was carried out.'}
+tmp <- stageCorrection(hoodStage=NA, plotting=T)
+```
+
+Figure \@ref(fig:harpStagePlot)A shows the predicted proportions in different stages based on the model fitted to the 2012 data, and reported in @Øigård2014a, along with the observed proportions observed during the staging survey on March 21^st^ 2018. The best fit for the observed 2018 proportions suggested that the equivalent date in 2012 would have been March `r 21+round(harpCorrect$dayAdj)`^th^, providing us with a time correction of `r round(harpCorrect$dayAdj, 1)` days. Applying this correction to the dates when aerial surveys were carried out in 2018 (i.e. March 27^th^ and 28^th^), suggested that the equivalent dates in 2012 would have been March `r round(harpCorrect$flightAdj)[1]`^th^ and `r round(harpCorrect$flightAdj)[2]`^st^. Figure \@ref(fig:harpStagePlot)B shows the predicted proportion of harp seal pups visible on ice as a function of time, based on the model fitted to 2012 staging data [@Øigård2014a]. The estimated proportion of pups on ice on the dates equivalent to the aerial survey dates in 2018 decreased from `r round(max(harpCorrect$prop), 2)` around noon on March `r round(harpCorrect$flightAdj)[1]`^th^ to `r round(min(harpCorrect$prop), 2)` on March `r round(harpCorrect$flightAdj)[2]`^st^ (mean: `r round(mean(harpCorrect$prop), 4)`, sd: `r round(sd(harpCorrect$prop), 4)`).
+
+### Hooded seals
+The number of hooded seal pups in individual age dependent stages is shown in Table \@ref(tab:hoodStage). The following binning of the various stages of the hooded seal pups was: stage 1 = Newborn and Thin, stage 2 = Fat, and stage 3 = Solitary. 
+
+```{r hoodStage, eval=TRUE, warning=F, message=F}
+require(kableExtra)
+require(knitr)
+names(hoodTab) <- unlist(lapply(names(hoodTab), function(x) unlist(strsplit(x, ' '))[1]))
+if (doc.type == "docx") { 
+  require(flextable)
+  require(officer)
+  for(i in 2:length(hoodTab)) hoodTab[,i] <- as.integer(hoodTab[,i])
+  ft <- flextable(rbind(hoodTab, hoodFl))
+  ft <- merge_at(ft, 2, c(3:5), part='body')
+  ft <- align(ft, align = "center", part='all')
+  ft <- add_header(ft, Date='', Parturient='Stages', Newborn='', Thin='', Fat='', Solitary='', Total='')
+  ft <- height(ft, height=0.3, part='header')
+  ft <- merge_at(ft, 1, c(2:(length(hoodTab)-1)), part='header')
+  ft <- add_header(ft, Date='Number of hooded seal pups in individual age dependent stages in the Greenland Sea. Numbers obtained during helicopter staging surveys on March 21, 2018, or from stagings done from aerial images taken on March 27 & 28', Parturient='', Newborn='', Thin='', Fat='', Solitary='', Total='')
+  ft <- merge_at(ft, 1, c(1:(length(hoodTab))), part='header')
+  ft <- border_remove(ft)
+  ft <- hline_bottom( ft, border = fp_border(style = "solid", width=2), part='body')
+  ft <- hline(ft, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=2, j=c(2:(length(hoodTab)-1)), border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=1, j=c(3:5), border = fp_border(style = "solid", width=1), part='body')
+  ft <- align(ft, i=2, align = "center", part='header')
+  ft
+} else {
+  hoodFl$Date <- as.character(hoodFl$Date)
+  TabFl <- rbind(hoodTab, hoodFl)
+  TabFl$Thin <- TabFl$Newborn
+  TabFl$Parturient[2] <- ''
+  TabFl$Newborn[2] <- ''
+  TabFl$Fat[2] <- ''
+  kableExtra::kable(TabFl, 'latex', booktabs=T, align=c('l', rep('c', 6)), caption='Number of hooded seal pups in individual age dependent stages in the Greenland Sea. Numbers obtained during helicopter staging surveys on March 21, 2018') %>% kable_styling(latex_options = c('hold_position'), full_width=F, position='center') %>% add_header_above(c(' '=1, 'Stages'=length(hoodTab)-2, ' '=1)) %>% row_spec(1, extra_latex_after = '\\cline{3-5}') 
+}
+```
+
+The best fit for these observed proportions to the predicted proportions based on the 2012 survey [@Øigård2014b] gave an unrealistic time correction of `r round(hoodCorrect$dayAdjSt, 1)` days, and equivalent aerial survey dates of March `r round(hoodCorrect$flightAdjSt[1])`^th^ and `r round(hoodCorrect$flightAdjSt[2])`^th^. This would result in predicted proportions on ice during days of aerial surveys of less than `r round(max(hoodCorrect$propSt), 3)`. As an alternative, we used stagings from photographs obtained during the aerial survey dates. Here, it was necessary to use a different binning of stages, due to the difficulty in distinguishing between newborn, thin and fat bluebacks. The simplest approach was to merge stages 1 and 2, thereby using the following binning: stage 1 = Newborn/Thin & Fat, stage 2 = Solitary. Using a similar approach as for harp seals, the best fitting observed proportions occurred at dates equivalent to March `r round(hoodCorrect$flightAdj)` (optimum time correction: `r round(hoodCorrect$dayAdj, 2)` days).   
+
+```{r hoodStagePlot, eval=TRUE, warning=F, message=F, fig.pos='H', fig.align='center', out.extra='', dpi=300, fig.width=8, fig.height=4, fig.cap='(A) Observed 2018 staging proportions (points) and 2012 estimates (lines) of a hooded seal pup being classified as belonging to the various stages, and (B) Predicted proportion of hooded seal pups on ice as a function of time. The shaded area shows how the proportion of pups visible on ice changes during the 24 hours of 28 March when the photographic survey was carried out.'}
+tmp <- stageCorrection(harpStage=NA, repfile='correctHoodStageProps2012.txt', plotting=T)
+```
+
+Figure \@ref(fig:hoodStagePlot)A shows the predicted proportions in different stages based on the model fitted to the 2012 data, and reported in @Øigård2014b, along with the means of the proportions observed in aerial images taken on March 27^th^ and 28^th^ 2018. Applying the time correction to the predicted proportion of seals on ice (Fig \@ref(fig:hoodStagePlot)B) resulted in proportions of decreasing from `r round(hoodCorrect$prop[1], 2)` on March `r round(hoodCorrect$flightAdj[1])` to `r round(tail(hoodCorrect$prop, 1), 2)` on March `r round(hoodCorrect$flightAdj[1])` (mean: `r round(mean(hoodCorrect$prop), 4)`, sd: `r round(sd(hoodCorrect$prop), 4)`). Since these values are similar to those used in the analyses of pup counts in 2012, we decided to follow the earlier approach and use our mean proportion as correction factor. 
+
+## Photographic surveys
+```{r sumTransects, cache=T, update.cache=F, message=FALSE, warning=FALSE}
+##if('factor' %in% class(survey$UTC)) {
+##  survey$UTC <- as.POSIXct(strptime(as.character(survey$UTC), '%Y-%m-%d %H:%M:%S'), tz='UTC')
+##}
+transSum <- aggregate(survey$UTC, list(survey$transect), min)
+names(transSum) <- c('Transect', 'StartTime')
+transSum$EndTime <- aggregate(survey$UTC, list(survey$transect), max)$x
+transSum$meanLat <- aggregate(survey$Latitude, list(survey$transect), mean, na.rm=T)$x
+transSum$minLon <- aggregate(survey$Longitude, list(survey$transect), min, na.rm=T)$x
+transSum$maxLon <- aggregate(survey$Longitude, list(survey$transect), max, na.rm=T)$x
+transSum$nHarp <- aggregate(survey$HarpPup, list(survey$transect), sum)$x
+transSum$nHood <- aggregate(survey$HoodPup, list(survey$transect), sum)$x
+transSum$nPhotos <- aggregate(survey$HarpPup, list(survey$transect), length)$x
+transSum$survey <- aggregate(survey$survey, list(survey$transect), mean, na.rm=T)$x
+##transSum$stratum <- aggregate(survey$stratum, list(survey$transect), mean, na.rm=T)$x
+##transSum$stratum4 <- aggregate(survey$stratum4, list(survey$transect), function(x) x[1])$x
+
+## Mean transect spacing for each survey (in NM):
+meanDists <- aggregate(transSum$meanLat, list(transSum$survey), function(x) mean(abs(diff(x)))*60)
+names(meanDists) <- c('survey', 'Spacing')
+
+transTab <- transSum
+transTab$Date <- format(transTab$StartTime, '%B %d')
+
+latrange <- aggregate(transTab$meanLat, list(transTab$Date), min)
+names(latrange) <- c('Date', 'min')
+latrange$max <- aggregate(transTab$meanLat, list(transTab$Date), max)$x
+
+
+meanLat <- degree(transTab$meanLat, transTab$minLon, digits=0)$lat
+minLon <-  degree(transTab$meanLat, transTab$minLon, digits=0)$lon
+maxLon <-  degree(transTab$meanLat, transTab$maxLon, digits=0)$lon
+##meanLat <- gsub('°', '\\degree', meanLat, fixed=T)
+transTab$StartTime <- format(transTab$StartTime, '%H:%M')
+transTab$EndTime <- format(transTab$EndTime, '%H:%M')
+transTab$meanLat <- meanLat
+transTab$minLon <-  minLon
+transTab$maxLon <-  maxLon
+##transTab <- transTab[,-c(10:12)]
+names(transTab)[c(2:9)] <- c('Start', 'End', 'Latitude', 'West', 'East', 'Harps', 'Hoods', 'nphotos')
+transTab <- transTab[,c(1,11,c(2:10))]
+```
+
+Two surveys with a total of `r length(which(transTab$Date=='March 27'))` E/W transect lines were flown on March 27^th^ 2018 (Fig \@ref(fig:SentinelSurveys); Table \@ref(tab:transectTables)), starting at the southern end of the whelping patch at `r floor(latrange$min[1])`°`r round((latrange$min[1]-floor(latrange$min[1]))*60)`'N. The spacing between the two southernmost lines was `r round(abs(diff(transSum$meanLat[c(1,2)]))*60, 2)`nm, while the spacing between  remaining transect lines between `r gsub('Â', '', transTab$Latitude[2])` and `r floor(latrange$max[1])`°`r round((latrange$max[1]-floor(latrange$max[1]))*60)`'N was roughly 2 nm (mean:`r round(mean((abs(diff(transSum$meanLat[which(transTab$Date=='March 27')]))*60)[-1]), 2)`; sd: `r  round(sd((abs(diff(transSum$meanLat[which(transTab$Date=='March 27')]))*60)[-1]), 2)`). In total `r aggregate(transSum$nPhotos, list(format(transSum$StartTime, '%d%m')), sum)$x[1]` images were taken during the two surveys on this day.
+
+
+```{r SentinelSurveys, echo=FALSE, eval=T, fig.pos='H', out.width='80%', out.height='40%', fig.show='hold', fig.align='center', fig.cap='Photo surveys on March 27 and 28 overlaid on ice images. Each survey photograph is represented by a yellow filled circle with the radius proportional to the total number of harp and hooded seals counted on each photograph'}
+knitr::include_graphics(c('C:/Users/a5406/Documents/Telletokt2018/SentinelsSurveys.png'))
+```
+
+\newpage
+
+```{r transectTables, eval=T}
+require(kableExtra)
+require(knitr)
+
+if (doc.type == "docx") { 
+  require(flextable)
+  require(officer)  
+  col.keys <- names(transTab)
+  col.keys <- gsub(' ', '', col.keys)
+  names(transTab)<- col.keys
+  names(transTab) <- gsub('ernend', '', names(transTab))
+  names(transTab) <- gsub('Hoodedseals', 'Hoods', names(transTab))
+  names(transTab) <- gsub('seals', 's', names(transTab))
+  
+  transTab <- transTab[,-c(3,4,11)]
+  for(i in which(unlist(lapply(transTab, class))=='numeric')) {
+    transTab[,i] <- as.integer(transTab[,i])
+  }
+  ft <- flextable(transTab, col_keys=names(transTab))
+  ft <- border_remove(ft)
+  ft <- add_header(ft, Transect='East-west transects (2 nm spacing) flown during fixed-wing photo surveys of harp and hooded seal whelping areas in the Greenland Sea drift ice on March 27 & 28, 2018. Positions are given in degrees & decimal minutes.', Date='', Latitude='', West='', East='', Harps='', Hoods='', nphotos='')
+  ft <- merge_at(ft, 1, c(1:length(transTab)), part='header')
+  ft <- align(ft, i=1, j=c(1:length(transTab)), 'left', part='header')
+  ft <- hline_bottom( ft, border = fp_border(style = "solid", width=2), part='body')
+  ft <- hline(ft, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ft <- hline_bottom(ft, border = fp_border(style = "solid", width=1), part='header')
+  ft <- hline(ft, i=match('March 28', transTab$Date)-1, j=c(1:(length(transTab))), border = fp_border(style = "solid", width=1), part='body')
+  ft
+} else {  
+  ##transTab$Latitude <- gsub('°', '$°$', transTab$Latitude, fixed=T)
+knitr::kable(transTab[,-c(3,4,11)], booktabs=T, escape=T, longtable=T, caption='East-west transects (2 nm spacing) flown during fixed-wing photo surveys of harp and hooded seal whelping areas in the Greenland Sea drift ice on March 27 2018. Positions are given in degrees / decimal minutes.') %>% kable_styling(latex_options = c('repeat_header'))  
+
+##kableExtra::kable(transTab[which(transTab$Date==transTab$Date[1]),-c(2,3,4,11)], 'latex', booktabs=T, caption='East-west transects (2 nm spacing) flown during fixed-wing photo surveys of harp and hooded seal whelping areas in the Greenland Sea drift ice on March 27 2018. Positions are given in decimal degrees.') %>% kable_styling(latex_options = c('hold_position', 'scale_down'), full_width=T, position='center')  
+
+##kableExtra::kable(transTab[which(transTab$Date==tail(transTab$Date,1)),-c(2,3,4,11)], 'latex', booktabs=T, caption='East-west transects (2 nm spacing) flown during fixed-wing photo surveys of harp and hooded seal whelping areas in the Greenland Sea drift ice on March 28 2018. Positions are given in decimal degrees.') %>% kable_styling(latex_options = c('hold_position', 'scale_down'), full_width=T, position='center') 
+}  
+```
+
+
+Due to fog in the northwestern parts of the area surveyed on March 27^th^, this area was re-photographed on March 28^th^  (Fig \@ref(fig:SentinelSurveys); Table \@ref(tab:transectTables)). Based on an assessment of the ice drift (10 nm southwards over 24 hours, judged by the tracks displayed by the two satellite beacons that remained in the area), this repeat survey was conducted in an area slightly offset towards the south relative to the area that was missed during the previous day (between `r floor(min(transSum$meanLat[which(transTab$Date=='March 28')]))`°`r round((min(transSum$meanLat[which(transTab$Date=='March 28')])-floor(min(transSum$meanLat[which(transTab$Date=='March 28')])))*60, 1)`'N and `r floor(max(transSum$meanLat[which(transTab$Date=='March 28')]))`°`r round((max(transSum$meanLat[which(transTab$Date=='March 28')])-floor(max(transSum$meanLat[which(transTab$Date=='March 28')])))*60, 1)`'N). Transect lines were separated by 2 nm between 71°30’N and 71°52’N. Between 71°52’N and 72°12’N, where seals were most abundant, the distance between transect lines was reduced to 1nm.
+ 
+A total of `r length(which(transTab$Date=='March 28'))` east-west/west-east transect lines were flown on March 28^th^, and `r aggregate(transTab$nphotos, list(transTab$Date), sum)$x[2]` images were taken. 
+
+
+## Correcting for reader 2 bias
+We estimated the parameters for the linear correction models for reader 2.
+The slope $(\beta)$ parameters were `r round(coef(lm.harp)[2], 3)` ($SE=$ `r round(summary(lm.harp)$coefficients[2,2], 4)`) for harp seals and `r round(coef(lm.hood)[2], 3)` ($SE=$ `r round(summary(lm.hood)$coefficients[2,2], 4)`) for hooded seals (Fig. \@ref(fig:readerCorrPlots)). For harp seals, the intercept term $(\alpha)$ was not statistically significant at a 95% level, and was therefore dropped. For hooded seals, the intercept term was significantly different from 0 $(\alpha=$ `r round(coef(lm.hood)[1], 3)`, $SE=$ `r round(summary(lm.hood)$coefficients[1,2], 4)`, $p=$ `r round(summary(lm.hood)$coefficients[1,4], 2)`). The counts for reader 2 were thus corrected for this bias using these fitted model parameters. Generally speaking, this suggests an underestimation by reader 2 of `r round((coef(lm.harp)[2]-1)*100, 1)`%, and `r round((coef(lm.hood)[2]-1)*100, 1)`% for harp and hooded seals respectively. 
+
+
+<!--MAKE THESE CALCULATIONS!! The estimated variance contributions from these corrections were $\epsilon_{harp} =XXX$ and $\epsilon_{hood} =XXX$ for the harp and hooded seals respectively.-->
+
+```{r readerCorrPlots, eval=TRUE, warning=F, message=F, fig.pos='H', out.extra='', dpi=300, fig.width=9, fig.height=5, fig.cap='Inter-reader comparisons for harp and hooded seals, showing bias correction for Reader 1 using linear models with Reader 2 as explanatory variable.'}
+
+par(mfrow=c(1,2))
+plot(LL~MP, data=harp.double, asp=1, type='n', xlab='Reader 2', ylab='Reader 1')
+lines(c(0, 200), c(0, 200))
+points(LL~MP, data=harp.double, pch=19, col=rgb(0,0,0,0.3))
+
+matlines(c(0:60), pred.harp$fit, col=2, lty=c(1,2,2), lwd=1)
+legend('topleft', lty=c(1,1,2), col=c(1,2,2), cex=0.8, c('1:1 correspondence', 'Linear fit', 'Prediction interval'), bty='n')
+mtext(side=3, line=1, cex=1.5, 'Harp seals')
+
+plot(LL~MP, data=hood.double, type='n', xlab='Reader 2', ylab='')
+lines(c(0, 200), c(0, 200))
+points(LL~MP, data=hood.double, pch=19, col=rgb(0,0,0,0.3))
+
+matlines(c(0:60), pred.hood$fit, col=2, lty=c(1,2,2))
+legend('topleft', lty=c(1,1,2), col=c(1,2,2), cex=0.8, c('1:1 correspondence', 'Linear fit', 'Prediction interval'), bty='n')
+mtext(side=3, line=1, cex=1.5, 'Hooded seals')
+```
+
+```{r readerCorr}
+##survey <- merge(survey, mp@data[,c(2,3)], by='PHOTO_ID', all.x=T, all.y=F)
+reader2 <- match(survey$PHOTO_ID, mp$PHOTO_ID)
+reader2[which(!is.na(reader2))] <- '2'
+reader2[which(is.na(reader2))] <- ''
+reader1 <- match(survey$PHOTO_ID, ll$PHOTO_ID)
+reader1[which(!is.na(reader1))] <- '1'
+reader1[which(is.na(reader1))] <- ''
+
+reader <- paste0(reader1, reader2)
+reader[which(reader=='')] <- '1'
+survey$reader <- reader
+
+survey$HarpPup.rc <- survey$HarpPup
+survey$HarpPup.rc[which(survey$reader=='2')] <- predict(lm.harp, newdata=data.frame(MP=survey$HarpPup[which(survey$reader=='2')]))
+
+survey$HoodPup.rc <- survey$HoodPup
+survey$HoodPup.rc[which(survey$reader=='2')] <- predict(lm.hood, newdata=data.frame(MP=survey$HoodPup[which(survey$reader=='2')]))
+```
+
+## Pup production estimate
+
+A total of `r sum(transTab$Harps)` harp seal pups and `r sum(transTab$Hoods)` hooded seal pups were counted in the `r sum(transTab$nphotos)` photos from the `r nrow(transTab)` transects, without correcting for reading errors. Of these, `r aggregate(transTab$Harps, list(transTab$Date), sum)$x[1]` harps and `r aggregate(transTab$Hoods, list(transTab$Date), sum)$x[1]` hoods were counted in the `r aggregate(transTab$nphotos, list(transTab$Date), sum)$x[1]` photos from `r aggregate(transTab$nphotos, list(transTab$Date), length)$x[1]` transects flown on March 27, while `r aggregate(transTab$Harps, list(transTab$Date), sum)$x[2]` harps and `r aggregate(transTab$Hoods, list(transTab$Date), sum)$x[2]` hoods were counted in `r aggregate(transTab$nphotos, list(transTab$Date), sum)$x[2]` photos from `r aggregate(transTab$Harps, list(transTab$Date), length)$x[2]` transects flown on March 28. The spatial distribution of the seals is found in Figure  \@ref(fig:SentinelSurveys). 
+
+
+### Adjusting for complex survey design
+Due to the complex survey design caused by 1) flights being carried out over two consecutive days, 2) variations in transect spacing between surveys and 3) complex ice dynamics in the region during the aerial survey period (see Fig. \@ref(fig:SentinelSurveys)), we estimated pup production using various combinations of sub-surveys. 
+
+The first approach was to split the data into three surveys:
+
+1. All images from March 27^th^
+2. All images from northward leg of March 28^th^survey
+3. All images from southward leg of March 28^th^survey
+
+```{r surveyPlots, eval=TRUE, warning=F, message=F, fig.pos='H', out.extra='', dpi=300, fig.width=10, fig.height=10, fig.cap='Maps showing the distribution of photographs designated to the three surveys (blue), overlaid on all surveys combined (grey)'}
+
+par(mfrow=c(2,2))
+plot(Latitude~Longitude, main='Survey 1\nMarch 27', data=pup.counts[which(!is.na(pup.counts$transect)),], pch=15, col='lightgrey', xlim=range(pup.counts$Longitude[which(!is.na(pup.counts$transect))]), ylim=range(pup.counts$Latitude[which(!is.na(pup.counts$transect))]))
+points(Latitude~Longitude, pup.counts[which(pup.counts$survey==1 & !is.na(pup.counts$transect)),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+plot.new()
+
+plot(Latitude~Longitude, main='Survey 2\nMarch 28, Northward', data=pup.counts[which(!is.na(pup.counts$transect)),], pch=15, col='lightgrey', xlim=range(pup.counts$Longitude[which(!is.na(pup.counts$transect))]), ylim=range(pup.counts$Latitude[which(!is.na(pup.counts$transect))]))
+points(Latitude~Longitude, pup.counts[which(pup.counts$survey==2 & !is.na(pup.counts$transect)),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+plot(Latitude~Longitude, main='Survey 3\nMarch 28, Southward', data=pup.counts[which(!is.na(pup.counts$transect)),], pch=15, col='lightgrey', xlim=range(pup.counts$Longitude[which(!is.na(pup.counts$transect))]), ylim=range(pup.counts$Latitude[which(!is.na(pup.counts$transect))]))
+points(Latitude~Longitude, pup.counts[which(pup.counts$survey==3 & !is.na(pup.counts$transect)),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+
+```
+
+These surveys are shown in Figure \@ref(fig:surveyPlots). The rationale for the split between northward and southward surveys on March 28^t^ is that the transects during the initial northward leg was spaced at roughly 2 nm, while spacing between transects during the return trip towards the south was generally around 1 nm. This initial split therefore made sense since it: a) separated the two survey days and b) allowed two estimates using different transect spacings. 
+
+\newpage
+
+```{r kingsleySurveys, message=T, warning=T}
+## Mean transect spacing for each survey (in NM):
+meanDists <- aggregate(transSum$meanLat, list(transSum$survey), function(x) mean(abs(diff(x)))*60)
+names(meanDists) <- c('survey', 'Spacing')
+
+
+## Survey 1 (March 27, 2018):
+survey1 <- survey[which(survey$survey==1),]
+EstHarp.1 <- kingsley((survey1$Grid.Easting-mean(survey1$Grid.Easting))/1852,
+                    survey1$HarpPup,
+                    survey1$area,
+                    survey1$transect,
+                    meanDists$Spacing[1], 1)
+
+EstHood.1 <- kingsley((survey1$Grid.Easting-mean(survey1$Grid.Easting))/1852,
+                    survey1$HoodPup,
+                    survey1$area,
+                    survey1$transect,
+                    meanDists$Spacing[1], 1)
+
+
+## Survey 2 (March 28, 2018, northward leg):
+survey2 <- survey[which(pup.counts$survey==2),]
+EstHarp.2 <- kingsley((survey2$Grid.Easting-mean(survey2$Grid.Easting))/1852,
+                    survey2$HarpPup,
+                    survey2$area,
+                    survey2$transect,
+                    meanDists$Spacing[2], 1)
+
+EstHood.2 <- kingsley((survey2$Grid.Easting-mean(survey2$Grid.Easting))/1852,
+                    survey2$HoodPup,
+                    survey2$area,
+                    survey2$transect,
+                    meanDists$Spacing[2], 1)
+
+
+## Survey 3 (March 28, 2018, southward leg):
+survey3 <- survey[which(survey$survey==3),]
+EstHarp.3 <- kingsley((survey3$Grid.Easting-mean(survey3$Grid.Easting))/1852,
+                    survey3$HarpPup,
+                    survey3$area,
+                    survey3$transect,
+                    meanDists$Spacing[3], 1)
+
+EstHood.3 <- kingsley((survey3$Grid.Easting-mean(survey3$Grid.Easting))/1852,
+                    survey3$HoodPup,
+                    survey3$area,
+                    survey3$transect,
+                    meanDists$Spacing[3], 1)
+
+allEst <- rbind(EstHarp.1, EstHarp.2, EstHarp.3,
+                EstHood.1, EstHood.2, EstHood.3)
+allEst$Species <- c(rep('Harp', 3), rep('Hood', 3))
+allEst$Survey <- rep(c(c(1:3)), 2)
+allEst$lowerCI <- allEst$N-allEst$SE
+allEst$upperCI <- allEst$N+allEst$SE
+allEst <- allEst[,c(4,5,1,2,6,7,3)]
+allEst$N <- as.integer(round(allEst$N))
+allEst$SE <- round(allEst$SE, 1)
+allEst$CV <- round(allEst$CV, 1)
+allEst$lowerCI <- as.integer(round(allEst$lowerCI))
+allEst$upperCI <- as.integer(round(allEst$upperCI))
+
+if (doc.type == "docx") { 
+  require(flextable)
+  require(officer)  
+  ftpp <- flextable(allEst)
+  ftpp <- border_remove(ftpp)
+  ftpp <- add_header(ftpp, Species='Uncorrected pup production estimates for separate surveys. Survey 1: March 27, Survey 2: March 28, northward, Survey 3: March 28 southward', Survey='', N='', SE='', lowerCI='', upperCI='', CV='')
+  ftpp <- merge_at(ftpp, 1, c(1:length(allEst)), part='header')
+  ftpp <- align(ftpp, 1, c(1:length(allEst)), 'left', part='header')
+  ftpp <- hline_bottom(ftpp, border = fp_border(style = "solid", width=2), part='body')
+  ftpp <- hline(ftpp, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ftpp <- hline_bottom(ftpp, border = fp_border(style = "solid", width=1), part='header')
+  ftpp <- hline(ftpp, i=match('Hood', allEst$Species)-1, j=c(1:length(allEst)), border = fp_border(style = "solid", width=1), part='body')
+  ftpp <- colformat_num(ftpp, c('SE', 'CV'), big.mark='', digits=1)
+  ftpp
+} else {  
+  knitr::kable(allEst, booktabs=T, escape=T, caption='Uncorrected pup production estimates for separate surveys. Survey 1: March 27, Survey 2: March 28, northward, Survey 3: March 28 southward. Coefficient of Variation (CV) is given in percent')
+}  
+```
+
+
+Pup production estimates from these surveys for both species are presented in Table \@ref(tab:kingsleySurveys). For harp seals, the estimated pup production based on the survey carried out on March 27^th^ was `r format(allEst$N[1], scientific=F)` ($SE=$ `r format(allEst$SE[1], scientific=F)`) harp seal pups and `r format(allEst$N[4], scientific=T)` ($SE=$ `r format(allEst$SE[4], scientific=F)`) hooded seal pups, prior to applying any corrections.
+
+The two partially overlapping surveys carried out across a smaller latitudinal range on March 28^th^ yielded combined mean estimates of `r format(sum(allEst$N[c(2,3)]), scientific=F)` and `r format(sum(allEst$N[c(5,6)]), cientific=F)`. This lower estimate for March 28^th^ is unsurprising, given the narrower latitudinal range covered during that day compared to March 27^th^. Furthermore, the two surveys on March 28^th^ were partially, but not completely, overlapping. Direct comparison between the two is therefore not possible, and they also cannot be assumed to be completely independent. 
+
+```{r quilt, message=FALSE, warning=FALSE}
+survey$merged.transect <- survey$transect
+survey$stratum <- rep(NA, nrow(survey))
+survey$stratum[which(survey$survey==1 & survey$Latitude<71.84)] <- 1
+survey$stratum[which(survey$survey==2 & survey$Latitude>71.84)] <- 2
+survey$stratum[which(survey$transect=='35004_22')] <- NA
+survey$stratum[which(survey$transect=='35004_26')] <- 2
+survey$stratum[which(survey$transect=='35004_30')] <- 2
+survey$stratum[which(survey$transect=='35004_32')] <- 2
+
+survey$merged.transect[which(survey$transect=='35004_26')] <- '35004_19'
+survey$merged.transect[which(survey$transect=='35004_30')] <- '35004_16'
+survey$merged.transect[which(survey$transect=='35004_32')] <- '35004_15'
+
+# Omit overlapping images
+survey$stratum[which(survey$transect=='35004_19' & survey$Longitude>(-18.886))] <- NA
+
+survey$stratum[which(survey$transect=='35004_16' & survey$Longitude>(-19.02))] <- NA
+
+survey$stratum[which(survey$transect=='35004_15' & survey$Longitude>(-19.4))] <- NA
+
+survey$stratum[which(survey$survey==3 & 
+                       (survey$transect!='35004_26' & 
+                        survey$transect!='35004_30' &
+                        survey$transect!='35004_32'))] <- 3
+
+survey$stratum[which(survey$transect=='35004_22')] <- 3
+survey$stratum4 <- survey$stratum>=2
+
+transSum$stratum <- aggregate(survey$stratum, list(survey$transect), mean, na.rm=T)$x
+
+transSum$stratum[which(is.nan(transSum$stratum))] <- NA
+
+
+strataSum <- aggregate(survey$Latitude, list(survey$stratum), min)
+names(strataSum) <- c('Stratum', 'minLat')
+strataSum$maxLat <- aggregate(survey$Latitude, list(survey$stratum), max)$x
+
+## Mean transect spacing for each stratum (in NM):
+strataSum$spacing <- aggregate(transSum$meanLat, list(transSum$stratum), function(x) mean(abs(diff(x)))*60)$x
+
+
+```
+
+
+The initial strategy to use the GPS drifters to account for ice drift between the two aerial survey dates when planning transect lines for March 28^th^ turned out to be unsatisfactory, given the very different trajectories of the two relevant drifters (Fig \@ref(fig:BeaconFlightsSentinel)). We therefore developed a second approach to splitting the data into three different strata: 
+
+1. Photos from March 27^th^ in southern region (up to `r floor(strataSum$maxLat[1])`°`r round((strataSum$maxLat[1]-floor(strataSum$maxLat[1]))*60, 1)`'N) at 2 nm spacing.
+
+2. Photos from March 28^th^ (north of `r floor(strataSum$maxLat[1])`°`r round((strataSum$maxLat[1]-floor(strataSum$maxLat[1]))*60, 1)`'N and up to `r floor(strataSum$maxLat[2])`°`r round((strataSum$maxLat[2]-floor(strataSum$maxLat[2]))*60, 1)`'N) at 2 nm spacing. These are based on northward leg, but extended eastwards at the same latitudes using transects 'filled in' during the southward leg (omitting overlapping stretches).
+
+3. Photos from March 28^th^, southward transect (from `r floor(strataSum$maxLat[3])`°`r round((strataSum$maxLat[3]-floor(strataSum$maxLat[3]))*60, 1)`'N to `r floor(strataSum$minLat[3])`°`r round((strataSum$minLat[3]-floor(strataSum$minLat[3]))*60, 1)`'N), omitting transects at same latitudes as used in stratum 2 in order to obtain regular spacings of roughly 2 nm. This provides an alternative estimate in a similar region. 
+
+We also created one additional fourth stratum, combined from strata 2 and 3, with 1 nm strip distance. These strata are shown in Figure \@ref(fig:strataPlots). 
+
+
+```{r strataPlots, message=FALSE, warning=FALSE, fig.pos='H', out.extra='', dpi=300, fig.width=10, fig.height=10, fig.cap='Maps showing the distribution of photographs designated to the four modified strata (blue), overlaid on all surveys combined (grey)'}
+
+par(mfrow=c(2,2))
+plot(Latitude~Longitude, main='Stratum 1 (March 27)', data=survey, pch=15, col='lightgrey')
+points(Latitude~Longitude, survey[which(survey$stratum==1),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+plot(Latitude~Longitude, main='Stratum 2 (March 28, northward (eastward extensions))', data=survey, pch=15, col='lightgrey')
+points(Latitude~Longitude, survey[which(survey$stratum==2),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+plot(Latitude~Longitude, main='Stratum 3 (March 28, southward)', data=survey, pch=15, col='lightgrey')
+points(Latitude~Longitude, survey[which(survey$stratum==3),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+plot(Latitude~Longitude, main='Stratum 4 (March 28, 1 nm spacing)', data=survey, pch=15, col='lightgrey')
+points(Latitude~Longitude, survey[which(survey$stratum4),], pch=15, cex=0.5, col=rgb(0,0,1,0.3))
+
+```
+
+```{r strataEst, message=FALSE, warning=FALSE}
+
+## Stratum 1:
+str1 <- survey[which(survey$stratum==1),]
+
+mSpacing <- diff(sort(aggregate(str1$Latitude, list(str1$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str1$Latitude, list(str1$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstHarp.s1 <- kingsley((str1$Grid.Easting-mean(str1$Grid.Easting))/1852,
+                    str1$HarpPup,
+                    str1$area,
+                    str1$merged.transect,
+                    mSpacing, 1)
+
+EstHood.s1 <- kingsley((str1$Grid.Easting-mean(str1$Grid.Easting))/1852,
+                    str1$HoodPup,
+                    str1$area,
+                    str1$merged.transect,
+                    mSpacing, 1)
+
+
+## Stratum 2:
+str2 <- survey[which(survey$stratum==2),]
+
+mSpacing <- diff(sort(aggregate(str2$Latitude, list(str2$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str2$Latitude, list(str2$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstHarp.s2 <- kingsley((str2$Grid.Easting-mean(str2$Grid.Easting))/1852,
+                    str2$HarpPup,
+                    str2$area,
+                    str2$merged.transect,
+                    mSpacing, 1)
+
+EstHood.s2 <- kingsley((str2$Grid.Easting-mean(str2$Grid.Easting))/1852,
+                    str2$HoodPup,
+                    str2$area,
+                    str2$merged.transect,
+                    mSpacing, 1)
+
+
+## Stratum 3:
+str3 <- survey[which(survey$stratum==3),]
+
+mSpacing <- diff(sort(aggregate(str3$Latitude, list(str3$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str3$Latitude, list(str3$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstHarp.s3 <- kingsley((str3$Grid.Easting-mean(str3$Grid.Easting))/1852,
+                    str3$HarpPup,
+                    str3$area,
+                    str3$merged.transect,
+                    mSpacing, 1)
+
+EstHood.s3 <- kingsley((str3$Grid.Easting-mean(str3$Grid.Easting))/1852,
+                    str3$HoodPup,
+                    str3$area,
+                    str3$merged.transect,
+                    mSpacing, 1)
+
+
+## Stratum 4:
+str4 <- survey[which(survey$stratum4),]
+
+mSpacing <- diff(sort(aggregate(str4$Latitude, list(str4$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str4$Latitude, list(str4$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstHarp.s4 <- kingsley((str4$Grid.Easting-mean(str4$Grid.Easting))/1852,
+                    str4$HarpPup,
+                    str4$area,
+                    str4$merged.transect,
+                    mSpacing, 1)
+
+EstHood.s4 <- kingsley((str4$Grid.Easting-mean(str4$Grid.Easting))/1852,
+                    str4$HoodPup,
+                    str4$area,
+                    str4$merged.transect,
+                    mSpacing, 1)
+
+
+## Strata 1 & 4 combined:
+
+str1.4 <- survey[which(survey$stratum4 | survey$stratum==1),]
+
+mSpacing <- diff(sort(aggregate(str1.4$Latitude, list(str1.4$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str1.4$Latitude, list(str1.4$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstHarp.s1.4 <- kingsley((str1.4$Grid.Easting-mean(str1.4$Grid.Easting))/1852,
+                    str1.4$HarpPup,
+                    str1.4$area,
+                    str1.4$merged.transect,
+                    mSpacing, 1)
+
+EstHood.s1.4 <- kingsley((str1.4$Grid.Easting-mean(str1.4$Grid.Easting))/1852,
+                    str1.4$HoodPup,
+                    str1.4$area,
+                    str1.4$merged.transect,
+                    mSpacing, 1)
+
+
+allStratEst <- rbind(EstHarp.s1, EstHarp.s2, EstHarp.s3, EstHarp.s4, EstHarp.s1.4,EstHood.s1, EstHood.s2, EstHood.s3, EstHood.s4, EstHood.s1.4)
+
+allStratEst$Species <- c(rep('Harp', 5), rep('Hood', 5))
+allStratEst$Stratum <- rep(c(c(1:4), '1+4'), 2)
+allStratEst$lowerCI <- allStratEst$N-allStratEst$SE
+allStratEst$upperCI <- allStratEst$N+allStratEst$SE
+allStratEst <- allStratEst[,c(4,5,1,2,6,7,3)]
+
+allStratEst$N <- as.integer(round(allStratEst$N))
+allStratEst$SE <- round(allStratEst$SE, 1)
+allStratEst$CV <- round(allStratEst$CV, 1)
+allStratEst$lowerCI <- as.integer(round(allStratEst$lowerCI))
+allStratEst$upperCI <- as.integer(round(allStratEst$upperCI))
+
+if (doc.type == "docx") { 
+  require(flextable)
+  require(officer)  
+  ftpps <- flextable(allStratEst)
+  ftpps <- border_remove(ftpps)
+  ftpps <- add_header(ftpps, Species='Uncorrected pup production estimates for separate strata. Stratum 1: March 27, southern part, Stratum 2: March 28, northern part, northward, Stratum 3: March 28 southward at 2 nm spacing, Stratum 4: Strata 2 and 3 combined, 1nm spacing, Stratum 1+4: Strata 1 and 4 combined', Stratum='', N='', SE='', lowerCI='', upperCI='', CV='')
+  ftpps <- merge_at(ftpps, 1, c(1:length(allEst)), part='header')
+  ftpps <- align(ftpps, 1, c(1:length(allEst)), 'left', part='header')
+  ftpps <- hline_bottom(ftpps, border = fp_border(style = "solid", width=2), part='body')
+  ftpps <- hline(ftpps, i=1, border = fp_border(style = "solid", width=2), part='header')
+  ftpps <- hline_bottom(ftpps, border = fp_border(style = "solid", width=1), part='header')
+  ftpps <- hline(ftpps, i=match('Hood', allStratEst$Species)-1, j=c(1:length(allStratEst)), border = fp_border(style = "solid", width=1), part='body')
+  ftpps <- colformat_num(ftpps, c('SE', 'CV'), big.mark='', digits=1)
+  ftpps
+} else {  
+    knitr::kable(allStratEst, booktabs=T, escape=T,  caption='Uncorrected pup production estimates for separate strata. Stratum 1: March 27, southern part, Stratum 2: March 28, northern part, northward, Stratum 3: March 28 southward at 2 nm spacing, Stratum 4: Strata 2 and 3 combined, 1 nm spacing, Stratum 1+4: Strata 1 and 4 combined')
+}  
+```
+
+Pup production estimates for these modified strata are presented in Table \@ref(tab:strataEst). Various combined estimates for the entire surveyed area can be obtained by combining estimates for Stratum 1 (March 27^th^ southern region) with either one of the other strata. Strata 1 and 2 combined yields mean estimates of `r sum(allStratEst$N[c(1,2)])` harp seal pups and `r sum(allStratEst$N[c(6,7)])` 
+hooded seal pups; Strata 1 and 3 combined yields mean estimates of `r sum(allStratEst$N[c(1,3)])` and `r sum(allStratEst$N[c(6,8)])` for harp and hooded seal pups respectively. 
+
+While these mean estimates are relatively similar, the standard error of the estimate for Stratum 4 (i.e. Strata 2 & 3 combined at half transect spacing) is substantially lower. We therefore suggest that the most robust estimate for the entire region is provided by combining Strata 1 and 4, giving estimated pup productions (prior to corrections for reader bias and temporal distribution of births) of `r format(allStratEst$N[5], scientific=F)` ($SE=$ `r format(allStratEst$SE[5], scientific=F)`) harp seal pups and `r format(allStratEst$N[10], scientific=F)` ($SE=$ `r format(allStratEst$SE[10], scientific=F)`) hooded seal pups. 
+
+It is worth noting that this is also relatively similar to the estimated pup productions based on the March 27^th^ flights only (`r format(allEst$N[1], scientific=F)`, $SE=$ `r format(allEst$SE[1], scientific=F)` and `r format(allEst$N[4], scientific=T)`, $SE=$ `r format(allEst$SE[4], scientific=F)` for harp and hooded seal pups respectively, see Table \@ref(tab:kingsleySurveys)).    
+
+
+```{r strataEstCorrected, message=FALSE, warning=FALSE}
+
+str1.4 <- survey[which(survey$stratum4 | survey$stratum==1),]
+
+mSpacing <- diff(sort(aggregate(str1.4$Latitude, list(str1.4$merged.transect), mean)$x))*60
+##mSpacing <- diff(aggregate(str1.4$Latitude, list(str1.4$merged.transect), mean)$x)*60
+mSpacing <- mean(abs(mSpacing[which(abs(mSpacing)>0.5)]))
+EstCorrHarp.s1.4 <- kingsley((str1.4$Grid.Easting-mean(str1.4$Grid.Easting))/1852,
+                    str1.4$HarpPup.rc,
+                    str1.4$area,
+                    str1.4$merged.transect,
+                    mSpacing, 1)
+
+EstCorrHood.s1.4 <- kingsley((str1.4$Grid.Easting-mean(str1.4$Grid.Easting))/1852,
+                    str1.4$HoodPup.rc,
+                    str1.4$area,
+                    str1.4$merged.transect,
+                    mSpacing, 1)
+```
+
+Using Strata 1 and 4 combined, and after correcting for reader bias and temporal birth distribution, we obtained estimated of pup productions of `r format(round(EstCorrHarp.s1.4$N/mean(harpCorrect$prop)), scientific=F)` ($SE=$ `r format(round(EstCorrHarp.s1.4$SE/mean(harpCorrect$prop)), scientific=F)`) for harp seals and `r format(round(EstCorrHood.s1.4$N/mean(hoodCorrect$prop)), scientific=F)` ($SE=$ `r format(round(EstCorrHood.s1.4$SE/mean(hoodCorrect$prop)), scientific=F)`) for hooded seals.
+
+# DISCUSSION
+
+The used survey methods are comparable with those applied in previous surveys performed for harp and hooded seal assessments in the northwest Atlantic [@Bowen1987; @Hammill1992; @Stenson1993; @Stenson1997; @Stenson2002; @Stenson2003; @Stenson2005; @Stenson2010; @Hammill2006], in the Greenland Sea [@Øritsland1995; @ICES1998; @ICES1999; @Haug2006; @Salberg2008; @Øigård2010; @Øigård2014a; @Øigård2014b] and in the White Sea [@Potelov2003; @ICES2016]. In general, the survey design calls for one or more visual and/or photographic surveys of every whelping patch. Primarily due to the scattered distribution of both species during the current study, no visual surveys were attempted, and only one photographic survey was conducted. 
+
+### Harp seals
+
+```{r sigTestHarp}
+n.2018 <- length(which(summary(str1.4$merged.transect)>0))
+n.2012 <- 27
+
+mu.d <- 89590 - round(EstCorrHarp.s1.4$N/mean(harpCorrect$prop))
+se.d <- sqrt(((12310^2)/n.2012) + ((EstCorrHarp.s1.4$SE/mean(harpCorrect$prop))^2)/n.2018)  
+
+t <- mu.d/se.d
+df <- min(c(n.2012, n.2018))-1
+
+```
+Previous (1977-1991) mark-recapture experiments [@Øien1995] and aerial pup production surveys performed in 1991 [@Øien1995],  2002 [@Haug2006], and 2007 [@Øigård2010] suggested a prevailing increase in  Greenland Sea harp seal pup production.  A new estimate obtained in 2012, corrected for reader error, temporal birth distribution and overlapping photos, was 89 590 (SE = 12 310, CV = 13.7%). Although the 2012 estimate was lower than the estimates in 2002 and 2007, it was not significantly different from those estimates on a 5% level and @Øigård2014a therefore suggested that the pup production had not changed much over the preceding decade [@Øigård2014b]. However, the difference in mean estimates between 2012 and the current corrected estimate of 54 181 (SE = 9 049, CV = 17.0%) is highly significant ($t=$ `r round(t, 3)`; $df=$ `r df`; $p<0.0001$), indicating a reduction in pup production as also observed in the Barents Sea / White Sea population after 2003 and in the Northwest Atlantic population in 2012 [@ICES2016]. 
+
+As in previous surveys, reconnaissance surveys were conducted in the period 18-31 March 2018 of all areas historically used by harp seals in the Greenland Sea [areas between 68°40’N and 74°47’N, see @Øritsland1995; @Haug2006; @Øigård2010; @Øigård2014a]. There is good evidence to conclude that previous ice conditions in the central Greenland Sea were significantly different from those witnessed in recent decades [@Divine2006]. These differences manifest themselves as a reduction in extent and concentration of drift ice, particularly within the region around and north of the Jan Mayen island where the drifting ice traditionally formed an ice-peninsula [@Wilkinson2005] which used to be the main harp seal breeding location [@Sergeant1991]. Observed ice reductions have obviously changed the harp seal breeding habitat in the Greenland Sea. 
+
+Whereas the Greenland Sea harp seal stock has been subject to commercial exploitation for centuries, the hunting pressure has been substantially reduced in the past 3-4 decades [@Iversen1927; @Nakken1988; @Sergeant1991; @Haug2006; @ICES2016]. Based on catch per unit effort analyses and mark-recapture pup production estimates, it has been assumed that the population has increased since the early 1960s, although direct evidence has been limited [@Ulltang1988; @Øien1995]. Recent model runs, performed by @ICES2016, have confirmed that the population may have increased in size since c.a. 1970, and it has been predicted that the population could continue to increase under the current harvest regime of very small annual removals. Nevertheless, the 2018 pup production estimate is significantly lower than previous estimates, which is in contrast to the assumptions of an increasing population. It is important to note that the annual fecundity rates in harp seals can be highly variable. In the Northwest Atlantic, where annual harp seal fertility estimates are available since 1954, the proportion of females that were pregnant undergoes dramatic variations, from 40% to more than 85% between years [@ICES2011]. Such changes can certainly account for rapid changes in pup production, which are therefore not necessarily an indication of a sudden population decrease or increase. Unfortunately, age at maturity and fecundity of Greenland Sea harp seal females have been examined much less regularly, and data are therefore insufficient for similar analyses to be carried out for this population.
+
+### Hooded seals
+```{r sigTestHood}
+n.2018 <- length(which(summary(str1.4$merged.transect)>0))
+n.2012 <- 27
+
+mu.d <- 13655 - round(EstCorrHood.s1.4$N/mean(hoodCorrect$prop))
+se.d <- sqrt(((1888^2)/n.2012) + ((EstCorrHood.s1.4$SE/mean(hoodCorrect$prop))^2)/n.2018)  
+
+t <- mu.d/se.d
+df <- min(c(n.2012, n.2018))-1
+```
+
+Surveys using the same methodology as in the present study were conducted to assess the hooded seal pup production in the Greenland Seas in 1997 [@ICES1999], 2005 [@Salberg2008], 2007 [@Øigård2010] and 2012 [@Øigård2014b]. The 1997 pup production was estimated to be 24 000 (SE = 4 600, CV = 19.0%), which was a minimum estimate as it was not corrected for the temporal distribution of births or pups born outside of the whelping patches. The 2005, 2007 and 2012 estimates, corrected both for readers error and the temporal distribution of births, were 15 250 pups (SE = 3 473, CV = 22.8%), 16 140 (SE = 2 140, CV = 13.3%) and  13 655 pups (SE = 1 888, CV = 13.8%), respectively. Also the corrected 2018 estimate (N = 12 977, SE = 1 823, CV = 15.1%) is lower than all previous estimates (but not significantly lower than the estimate in 2012: $t=$ `r round(t, 3)`; $df=$ `r df`; $p=$ `r round(dt(t, df), 3)`).
+
+Hooded seals are usually found in more moderate densities than harp seals [@Lavigne1988]. The accuracy of estimates obtained from aerial surveys is dependent on the degree to which the possible sources of error are minimized. In assessing the relative importance of different sources of bias in estimating seal abundance from aerial surveys, @Myers1989 concluded that the greatest source of bias arose from missing whelping concentrations. The extensive reconnaissance surveys conducted in the period 18-31 March of all areas historically used by hooded seals in the Greenland Sea reduced the likelihood of missing major whelping concentrations in 2018, although difficult weather conditions may have left some pups unsurveyed in the very open ice fringes northeast of the area. In previous hooded seal surveys the surveyed areas have traditionally consisted of three strata types: (1) concentrations, i.e., whelping patches where both visual and photographic surveys were conducted with high-density coverage, (2) scattered pups in areas of historically high pup densities, and (3) scattered pups in areas of historically low pup densities, in cases of the two latter the methodology implied coverage with low-density photographic surveys [@Bowen1987; @Stenson1997]. As both in 2005 and 2012, the pups were scattered with no major patches over a manageable area in 2018, and a high-density coverage was obtained.
+
+Changes in the size of harvested seal populations are often attributed to hunting pressure. Although the Greenland Sea stock of hooded seals has been subject to commercial exploitation for centuries [@Iversen1927; @Sergeant1966; @Nakken1988], the hunting pressure was substantially reduced in the 2-3 decades that preceded the total protection of the species in 2007 [@Salberg2008; @ICES2016]. However, despite reduced, from 2007 completely stop, in hunting, model runs using recent pup production estimates as input suggest that the Greenland Sea hooded seal population has decreased substantially since the 1950s and stabilized at a very low level (less than 10% of the 1946 level) since the 1970s [@ICES2006b; @ICES2016; @Øigård2014b]. So far, the total protection given to the stock in 2007 seems not to have resulted in any changers in population development. In other commercially harvested seal stocks in the North Atlantic (hooded seals in the Northwest Atlantic, harp seals in both the Northwest and Northeast Atlantic), models have indicated that reduced catches were followed by population increases from the early 1970s [@Hammill2005; @Hammill2006; @Hammill2007; @Hammill2010; @ICES2006a; @ICES2006b; @ICES2016; @Skaug2007]. It seems unlikely that the different population development following reduced removals in Greenland Sea hooded seals could have been caused by recent hunting pressure alone. The distribution area of Greenland Sea hooded seals includes virtually all of the Nordic Seas [Greenland, Norwegian and Iceland Sea, see @Folkow1996] which are dynamic ecosystems influenced by a combination of factors that will have to be considered simultaneously to explain the observed population development. As for the harp seals, the observed reductions in extent and concentration of drift ice have obviously changed also the hooded seal breeding habitat in the Greenland Sea. Apparently, the reduced hooded seal abundance seems not to be accompanied by any visible reductions in female fertility [@ICES2016]. Interestingly, Northwest Atlantic hooded seal females have shown signs of reduced reproductive rates since the 1990s in spite of a modest increase in population abundance [@Frie2012]. 
+
+### ACKNOWLEDGEMENTS
+We would like to thank Friðrik Adolfsson and the pilots Eggert Sæmundsson, Bjarni Helgason, Guðmundur Emilsson and Grétar Húnn Benediktsson from Norlandair, the camera operator Jaakko Koljander from Terratec, the captain and crew on KV “Svalbard” and the helicopter crew, pilot Tom Østrem and technician Karl Arvid Andersen, from Airlift AS, for invaluable assistance. We are especially grateful to M. Polterman and L. Lindblom for reading the photos.
+
+
+
+
+# References
+<div id="refs"></div>
