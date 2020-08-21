@@ -943,19 +943,16 @@ graphDev = function(width = 7,height = 5) {
 
 #' Estimate the temporal distribution of births
 #'
-#' Estimating the temporal distribution of births to correct for pups not born yet or have left the ice
-#' @param data The data set with photo counts
-#' @param type Type of correction. Use 1 for separate correction for each reader (assumes two readers) and 2 for the same correction for both readers
-#' @param population Specify which population or populations to estimate the uncertainty from
-#' @param readers Specify the ID of each reader. Assumes 2 readers
-#' @param transect Vector containing the transect each photo comes from
-#' @param Spacing Transect width
-#' @param gap Distance threshold for length if flown over open water
-#' @param var_b
-#' @param var_u
-#' @param var_a
-#' @param cov_ab
-#' @param intcpt
+#' Estimating the temporal distribution of births to correct for pups not born yet or have left the ice. It is important to know that both populations cannot be run at the same time. Each population has to be run separately.
+#' @param harpfname Filename of the harp seal staging data
+#' @param harpLengthStages Length of each predefined harp seal stage
+#' @param harpKappa A shape parameter defining the duration of each stage
+#' @param hoodedfname Filename of the hooded seal staging data
+#' @param hoodedStages Length of each predefined hooded seal stage
+#' @param hoodedKappa A shape parameter defining the duration of each stage
+#' @param survey Name of the survey to be analyzed
+#' @param datePhoto Date for which the photographic survey was carrie out
+#' @param grDev Load a graphical device
 #' @return
 #' @keywords
 #' @export
@@ -970,19 +967,13 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
                       hoodedKappa = 8.6,
                       survey = "WestIce2012",
                       datePhoto = 28,
-                        transect,
-                        population = c("harp","hood"),
-                        distr = "negbin",
-                        Spacing = 3,
-                        ds = 0.1,
-                        plotMesh = TRUE,
-                        grDev = TRUE)
+                      grDev = TRUE)
 {
 
 
   if("harp" %in% population){
 
-    filename = paste0("/data/",survey,"/",harpfname)
+    filename = paste0("Data/",survey,"/",harpfname)
 
     data = read.table(filename,sep = "",header = TRUE)
     days = data$Date
@@ -1150,118 +1141,96 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   nn3 = Report$Nout[,3]
   nn = Report$Nout[,4]
 
-  #Build data frame
-  dfDist = data.frame(x = rep(t_tot,3), dist = NA,group = NA)
-  dfDist$dist[1:Nt_tot] = nn1/nn
-  dfDist$dist[(Nt_tot+1):(2*Nt_tot)] = nn2/nn
-  dfDist$dist[((2*Nt_tot+1)):(3*Nt_tot)] = nn3/nn
+  #Extract estimates
+  indQ = which(rep.rnames == "PropEst")
+  indmub = which(rep.rnames == "mub")
+  indsigmab = which(rep.rnames == "sigmab")
 
-  dfCum = data.frame(x = rep(t_tot,3),propIce = NA, group = NA)
-  dfCum$propIce[1:Nt_tot] = nn1
-  dfCum$propIce[(Nt_tot+1):(2*Nt_tot)] = nn1 + nn2
-  dfCum$propIce[((2*Nt_tot+1)):(3*Nt_tot)] = nn1 + nn2 + nn3
+  Q = rep.matrix[indQ,1]
+  Qsd = rep.matrix[indQ,2]
+  mub = rep.matrix[indmub,1]
+  mubsd = rep.matrix[indmub,2]
+  sigmab = rep.matrix[indsigmab,1]
+  sigmabsd = rep.matrix[indsigmab,2]
 
-  #dfPropCI = data.frame(x = t_tot,LL = (rep.matrix[3,1]-1.96*rep.matrix[3,2]), UL = (rep.matrix[3,1]+1.96*rep.matrix[3,2]))
+#####################################
+# Visualize the results
+#####################################
 
-  if("harp" %in% population){
-    dfDist$group[1:Nt_tot] = "Newborn/Yellow"
-    dfDist$group[(Nt_tot+1):(2*Nt_tot)] = "Thin white"
-    dfDist$group[((2*Nt_tot+1)):(3*Nt_tot)] = "Fat white/Greycoat"
+  # Monte Carlo simulations to show
+  # the uncertainty in the birth distribution
 
-    dfCum$group[1:Nt_tot] = "Newborn/Yellow"
-    dfCum$group[(Nt_tot+1):(2*Nt_tot)] = "Thin white"
-    dfCum$group[((2*Nt_tot+1)):(3*Nt_tot)] = "Fat white/Greycoat"
+  Nsim = 10000
+  muv = rnorm(Nsim,mub,mubsd)
+  sigmav = rnorm(Nsim,sigmab,sigmabsd)
+
+  BirthDistCurves = matrix(0,nrow = Nsim,ncol = length(xax))
+  Bdistmin = rep(0,length(xax))
+  Bdistmax = Bdistmin
+
+  for(i in 1:Nsim){
+    BirthDistCurves[i,] = dnorm(xax,muv[i],sigmav[i])
   }
 
-  if("hood" %in% population){
-    dfDist$group[1:Nt_tot] = "Newborn and Thin"
-    dfDist$group[(Nt_tot+1):(2*Nt_tot)] = "Fat"
-    dfDist$group[((2*Nt_tot+1)):(3*Nt_tot)] = "Solitary"
-
-    dfCum$group[1:Nt_tot] = "Newborn and Thin"
-    dfCum$group[(Nt_tot+1):(2*Nt_tot)] = "Fat"
-    dfCum$group[((2*Nt_tot+1)):(3*Nt_tot)] = "Solitary"
-
+  for(i in 1:length(xax)){
+    Bdistmin[i] = quantile(BirthDistCurves[,i],0.025)
+    Bdistmax[i] = quantile(BirthDistCurves[,i],0.975)
   }
 
-  indNa = which(is.na(dfDist$dist))
-  dfDist$dist[indNa] = 0
+  # Visualize the estimated birth distribution
+  windows(width = 9,height = 6)
+  par(mar = c(5.1, 5.1, 4.1, 2.1))
+  plot(xax,bdist,type = "n",
+       ylim = c(0,0.5),
+       lwd = 4,
+       col = "royalblue",
+       xlab = "Dates in March",
+       ylab = "Density",
+       bty = "l",
+       main = "Estimated birth distribution",
+       cex.axis = 1.5,
+       cex.lab = 1.5)
+  polygon(x = c(xax,rev(xax)),c(Bdistmin,rev(Bdistmax)),border = NA,
+          col = "lightblue")
 
-  dfObs = data.frame(x = days)
-  dfObs$stage1 = staging[,1]/rowSums(staging)
-  dfObs$stage2 = staging[,2]/rowSums(staging)
-  dfObs$stage3 = staging[,3]/rowSums(staging)
-
-
-  # windows(height = 7,width = 9)
-  # par(mar=c(6,5,4,5),bg = "white")
-  # plot(t_tot,nn1/nn,type = "l",col = colvcol[1],lwd = 4,xlim = c(xmin,xmax),ylim = c(0,1),xlab = "Days since 1. March 2012",ylab = "Proportion",cex.lab = 1.5,cex.main = 1.5,bty = "l")
-  # lines(t_tot,nn2/nn,col = colvcol[2],lwd = 4)
-  # lines(t_tot,nn3/nn,col= colvcol[3],lwd = 4)
-  # lines(days,staging[,1]/rowSums(staging),type = "p",col = colvcol[1],pch = 15,lwd = 5)
-  # lines(days,staging[,2]/rowSums(staging),type = "p",col = colvcol[2],pch = 19,lwd = 5)
-  # lines(days,staging[,3]/rowSums(staging),type = "p",col = colvcol[3],pch = 17,lwd = 5)
-
-  library(ggplot2)
-
-  theCols <- RColorBrewer::brewer.pal(3, 'Dark2')
-
-  windows(height = 7,width = 9)
-  pl <- ggplot() +
-    geom_line(data = dfDist ,aes(x=x,y=dist,group = group,color = group),
-              size = 1.3,
-              linetype = 1) +
-    coord_cartesian(xlim = c(xmin,xmax),ylim=c(0,1))
-    #xlim(xmin,xmax) + ylim(0,1)
-
-  pl <- pl + geom_point(data = dfObs, aes(x = days, y = stage1),size = 2,color = theCols[2],shape=15) +
-    geom_point(data = dfObs, aes(x = days, y = stage2),size = 2,col = theCols[3],shape=16) +
-    geom_point(data = dfObs, aes(x = days, y = stage3),size = 2,col = theCols[1],shape=17) +
-    geom_vline(xintercept = datePhoto, linetype="dashed",
-               color = "lightgrey", size=0.8)
+  lines(xax,bdist,col = "royalblue",lwd = 4)
+  lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+        lwd = 4,lty = 2,col = "black")
 
 
-  pl <- pl + theme_classic() +
-    theme(text = element_text(size=20), plot.margin = unit(c(1,2,1,1), "cm"), axis.text.y = element_text(angle = 90,margin = margin(t = 0, r = 20, b = 0, l = 30),vjust = 0.5),axis.text.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0),vjust = 1),
-                   legend.title = element_blank(),
-                   legend.position = "top") +
-    xlab("Days since 1. March") + ylab("Proportion") +
-    scale_fill_manual(values = c(theCols[1], theCols[2], theCols[3])) +
-    scale_colour_manual(values = c(theCols[1], theCols[2], theCols[3]))
 
-  pl
+  BirthDistCurves = matrix(0,nrow = Nsim,ncol = length(xax))
+  nn1min = rep(0,length(nn1))
+  nn1max = nnmin
+  nn2min = nnmin
+  nn2max = nnmin
+  nn3min = nnmin
+  nn3max = nnmin
+  nnmin = nnmin
+  nnmax = nnmin
 
+  for(i in 1:length(xax)){
+    Bdistmin[i] = quantile(BirthDistCurves[,i],0.025)
+    Bdistmax[i] = quantile(BirthDistCurves[,i],0.975)
+  }
+
+
+
+  t_tot = data$ttot
+  days = data$days
+  staging = data$staging
 
   windows(height = 7,width = 9)
-  pl <- ggplot() +
-    geom_line(data = dfCum ,aes(x=x,y=propIce,color = group),
-              size = 1.3,
-              linetype = 1,
-              ) +
-   # geom_ribbon(data=dfPropCI,aes(x = x, ymin=LL,ymax=UL),
-    #            alpha=0.3,
-    #            fill = "lightgrey") +
-    geom_vline(xintercept = datePhoto, linetype="dashed",
-               color = "lightgrey", size=0.8) +
-    coord_cartesian(xlim = c(xmin,xmax),ylim=c(0,1))
+  par(mar=c(6,5,4,5),bg = "white")
+  plot(t_tot,nn1/nn,type = "l",col = "red",lwd = 4,xlim = c(min(days)-5,max(days)+5),ylim = c(0,1),xlab = "Days since 1. March 2012",ylab = "Proportion",cex.lab = 1.5,cex.main = 1.5,bty = "l")
+  lines(t_tot,nn2/nn,col = "blue",lwd = 4)
+  lines(t_tot,nn3/nn,col= "green",lwd = 4)
+  points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
+  points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
+  points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
 
-    # geom_line(data = dfCum ,aes(x=x,y=nn12),
-    #           size = 1.3,
-    #           linetype = 1,
-    #           color = "blue") +
-    # geom_line(data = dfCum ,aes(x=x,y=nn123),
-    #           size = 1.3,
-    #           linetype = 1,
-    #           color = "green") +
+  legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
 
-
-  pl <- pl + theme_classic() +
-    theme(text = element_text(size=20), plot.margin = unit(c(1,2,1,1), "cm"), axis.text.y = element_text(angle = 90,margin = margin(t = 0, r = 20, b = 0, l = 30),vjust = 0.5),axis.text.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0),vjust = 1),
-          legend.title = element_blank(),
-          legend.position = "top") +
-    xlab("Days since 1. March") + ylab("Proportion seals on ice")
-
-pl
 
 
 returnList = list()
