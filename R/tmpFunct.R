@@ -70,6 +70,8 @@ propFitFun <- function(mub = NA,
   returnList$nn3 = nn3
   returnList$nn = nn
 
+  return(returnList)
+
   }
 
 
@@ -99,10 +101,10 @@ propFitFun <- function(mub = NA,
 
 
   m2 = convolve(m1,rev(phi_1),type = "op")*spacing;
-  m2 = m2 / (trapz(1:length(m2),m2)*spacing);
+  m2 = m2 / (caTools::trapz(1:length(m2),m2)*spacing);
   tm2 = seq(tau[2]+tm1[1],tau[length(tau)]+tm1[length(tm1)],length = length(m2));
   m3 = convolve(m2,rev(phi_2),type = "op")*spacing;
-  m3 = m3 / (trapz(1:length(m3),m3)*spacing);
+  m3 = m3 / (caTools::trapz(1:length(m3),m3)*spacing);
   tm3 = seq(tau[2]+tm2[1],tau[length(tau)]+tm2[length(tm2)],length = length(m3));
 
   cphi_1 = 1-pgamma(tau,kappa,1/rho_1);

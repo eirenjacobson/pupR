@@ -17,7 +17,8 @@ Imports:
   shapefiles, 
   rgdal,
   ggplot2,
-  mgcv
+  mgcv,
+  caTools
 LinkingTo: 
   TMB, 
   RcppEigen
