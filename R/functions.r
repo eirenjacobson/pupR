@@ -651,19 +651,18 @@ printGAM2screen <- function(estimates,
 
 #' Estimate the pup production using GAMs
 #'
-#' @param data The data set with photo counts
-#' @param type Type of correction. Use 1 for separate correction for each reader (assumes two readers) and 2 for the same correction for both readers
-#' @param population Specify which population or populations to estimate the uncertainty from
-#' @param readers Specify the ID of each reader. Assumes 2 readers
+#' @param harpcounts The data set with photo counts of harp seals
+#' @param hoodedcounts The data set with photo counts of harp seals
+#' @param area Define the area used for estimating the abundance
+#' @param xycord
 #' @param transect Vector containing the transect each photo comes from
-#' @param Spacing Transect width
-#' @param gap Distance threshold for length if flown over open water
-#' @param var_b
-#' @param var_u
-#' @param var_a
-#' @param cov_ab
-#' @param intcpt
-#' @return
+#' @param population Specify which population or populations to estimate the abundance
+#' @param distr Distance threshold for length if flown over open water
+#' @param spacing
+#' @param ds Resolution of the grid to estimate the GAM surface
+#' @param plotMesh
+#' @param grDev Logical parameter to turn on and off wether to plot the results in a graphical device
+#' @return A list containing the estimates obtained by the GAM method
 #' @keywords
 #' @export
 #' @examples
@@ -891,7 +890,7 @@ GAMestimate <- function(harpcounts = NA,
 #' @param var_a
 #' @param cov_ab
 #' @param intcpt
-#' @return
+#' @return A mesh grid for used to estimate the GAM density on
 #' @keywords
 #' @export
 #' @examples
@@ -952,8 +951,10 @@ graphDev = function(width = 7,height = 5) {
 #' @param hoodedKappa A shape parameter defining the duration of each stage
 #' @param survey Name of the survey to be analyzed
 #' @param datePhoto Date for which the photographic survey was carrie out
+#' @param Nsim Number of Monte Carlo simulations used to calculate the 95% CI
+#' @param plotCI Plot with or without 95% CI. Default is FALSE
 #' @param grDev Load a graphical device
-#' @return
+#' @return returnList A list containing the estimated mean and std of the birth distribution, the estimated proportions of seals on ice at the time of the photographic survey, and the estimated model fits to the observed staging data.
 #' @keywords
 #' @export
 #' @examples
@@ -967,6 +968,8 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
                       hoodedKappa = 8.6,
                       survey = "WestIce2012",
                       datePhoto = 28,
+                      Nsim = 10000,
+                      plotCI = FALSE,
                       grDev = TRUE)
 {
 
@@ -1110,18 +1113,20 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
 
   # Another list used later for MC simulations
 
-  timeDF = list()
+  if(plotCI){
+    timeDF = list()
 
-  timeDF$tau = tau
-  timeDF$tm1 = tm1
-  timeDF$tm2 = tm2
-  timeDF$tm3 = tm3
-  timeDF$tn1 = tn1
-  timeDF$tn2 = tn2
-  timeDF$tn3 = tn3
-  timeDF$t_min = t_min
-  timeDF$t_max = t_max
-  timeDF$t_tot = t_tot
+    timeDF$tau = tau
+    timeDF$tm1 = tm1
+    timeDF$tm2 = tm2
+    timeDF$tm3 = tm3
+    timeDF$tn1 = tn1
+    timeDF$tn2 = tn2
+    timeDF$tn3 = tn3
+    timeDF$t_min = t_min
+    timeDF$t_max = t_max
+    timeDF$t_tot = t_tot
+  }
 
   #############################
   # TMB part
@@ -1173,74 +1178,77 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   # the uncertainty in the birth distribution
   #####################################
 
+  # Use Monte Carlo simulations only if
+  # confidence intervals are plotted
+  if(plotCI){
+    Nsim = 10000
+    muv = rnorm(Nsim,mub,mubsd)
+    sigmav = rnorm(Nsim,sigmab,sigmabsd)
 
-  Nsim = 10000
-  muv = rnorm(Nsim,mub,mubsd)
-  sigmav = rnorm(Nsim,sigmab,sigmabsd)
+    BirthDistCurves = matrix(0,nrow = Nsim,ncol = length(xax))
+    Bdistmin = rep(0,length(xax))
+    Bdistmax = Bdistmin
 
-  BirthDistCurves = matrix(0,nrow = Nsim,ncol = length(xax))
-  Bdistmin = rep(0,length(xax))
-  Bdistmax = Bdistmin
+    for(i in 1:Nsim){
+      BirthDistCurves[i,] = dnorm(xax,muv[i],sigmav[i])
+    }
 
-  for(i in 1:Nsim){
-    BirthDistCurves[i,] = dnorm(xax,muv[i],sigmav[i])
-  }
+    for(i in 1:length(xax)){
+      Bdistmin[i] = quantile(BirthDistCurves[,i],0.025)
+      Bdistmax[i] = quantile(BirthDistCurves[,i],0.975)
+    }
 
-  for(i in 1:length(xax)){
-    Bdistmin[i] = quantile(BirthDistCurves[,i],0.025)
-    Bdistmax[i] = quantile(BirthDistCurves[,i],0.975)
-  }
+    nn1PropCurves = matrix(0,nrow = Nsim,ncol = length(t_tot))
+    nn2PropCurves = nn1PropCurves
+    nn3PropCurves = nn2PropCurves
+    nnPropCurves = nn3PropCurves
 
-  nn1PropCurves = matrix(0,nrow = Nsim,ncol = length(t_tot))
-  nn2PropCurves = nn1PropCurves
-  nn3PropCurves = nn2PropCurves
-  nnPropCurves = nn3PropCurves
+    nn1Propmin = rep(0,length(t_tot))
+    nn1Propmax = nn1Propmin
+    nn2Propmin = nn1Propmin
+    nn2Propmax = nn1Propmin
+    nn3Propmin = nn1Propmin
+    nn3Propmax = nn1Propmin
+    nnPropmin = nn1Propmin
+    nnPropmax = nn1Propmin
 
-  nn1Propmin = rep(0,length(t_tot))
-  nn1Propmax = nn1Propmin
-  nn2Propmin = nn1Propmin
-  nn2Propmax = nn1Propmin
-  nn3Propmin = nn1Propmin
-  nn3Propmax = nn1Propmin
-  nnPropmin = nn1Propmin
-  nnPropmax = nn1Propmin
+    nn1PropSd = nn1Propmin
+    nn2PropSd = nn2Propmin
+    nn3PropSd = nn3Propmin
+    nnPropSd = nnPropmin
 
-  nn1PropSd = nn1Propmin
-  nn2PropSd = nn2Propmin
-  nn3PropSd = nn3Propmin
-  nnPropSd = nnPropmin
+    for(i in 1:Nsim){
+      newPropFitCurves = propFitFun(muv[i],sigmav[i],data,timeDF)
 
-  for(i in 1:Nsim){
-    newPropFitCurves = propFitFun(muv[i],sigmav[i],data,timeDF)
+      nn1PropCurves[i,] = newPropFitCurves$nn1/newPropFitCurves$nn
+      nn2PropCurves[i,] = newPropFitCurves$nn2/newPropFitCurves$nn
+      nn3PropCurves[i,] = newPropFitCurves$nn3/newPropFitCurves$nn
+      nnPropCurves[i,] = newPropFitCurves$nn/newPropFitCurves$nn
 
-    nn1PropCurves[i,] = newPropFitCurves$nn1/newPropFitCurves$nn
-    nn2PropCurves[i,] = newPropFitCurves$nn2/newPropFitCurves$nn
-    nn3PropCurves[i,] = newPropFitCurves$nn3/newPropFitCurves$nn
-    nnPropCurves[i,] = newPropFitCurves$nn/newPropFitCurves$nn
+    }
 
-  }
+    # returnList$nn1 = nn1
+    # returnList$nn2 = nn2
+    # returnList$nn3 = nn3
+    # returnList$nn = nn
+    #
+    for(i in 1:length(t_tot)){
+      nn1Propmin[i] = quantile(nn1PropCurves[,i],0.025,na.rm = TRUE)
+      nn1Propmax[i] = quantile(nn1PropCurves[,i],0.975,na.rm = TRUE)
+      nn1PropSd[i] = sd(nn1PropCurves[,i],na.rm = TRUE)
 
-  # returnList$nn1 = nn1
-  # returnList$nn2 = nn2
-  # returnList$nn3 = nn3
-  # returnList$nn = nn
-  #
-  for(i in 1:length(t_tot)){
-    nn1Propmin[i] = quantile(nn1PropCurves[,i],0.025,na.rm = TRUE)
-    nn1Propmax[i] = quantile(nn1PropCurves[,i],0.975,na.rm = TRUE)
-    nn1PropSd[i] = sd(nn1PropCurves[,i],na.rm = TRUE)
+      nn2Propmin[i] = quantile(nn2PropCurves[,i],0.025,na.rm = TRUE)
+      nn2Propmax[i] = quantile(nn2PropCurves[,i],0.975,na.rm = TRUE)
+      nn2PropSd[i] = sd(nn2PropCurves[,i],na.rm = TRUE)
 
-    nn2Propmin[i] = quantile(nn2PropCurves[,i],0.025,na.rm = TRUE)
-    nn2Propmax[i] = quantile(nn2PropCurves[,i],0.975,na.rm = TRUE)
-    nn2PropSd[i] = sd(nn2PropCurves[,i],na.rm = TRUE)
+      nn3Propmin[i] = quantile(nn3PropCurves[,i],0.025,na.rm = TRUE)
+      nn3Propmax[i] = quantile(nn3PropCurves[,i],0.975,na.rm = TRUE)
+      nn3PropSd[i] = sd(nn3PropCurves[,i],na.rm = TRUE)
 
-    nn3Propmin[i] = quantile(nn3PropCurves[,i],0.025,na.rm = TRUE)
-    nn3Propmax[i] = quantile(nn3PropCurves[,i],0.975,na.rm = TRUE)
-    nn3PropSd[i] = sd(nn3PropCurves[,i],na.rm = TRUE)
-
-    nnPropmin[i] = quantile(nnPropCurves[,i],0.025,na.rm = TRUE)
-    nnPropmax[i] = quantile(nnPropCurves[,i],0.975,na.rm = TRUE)
-    nnPropSd[i] = sd(nnPropCurves[,i],na.rm = TRUE)
+      nnPropmin[i] = quantile(nnPropCurves[,i],0.025,na.rm = TRUE)
+      nnPropmax[i] = quantile(nnPropCurves[,i],0.975,na.rm = TRUE)
+      nnPropSd[i] = sd(nnPropCurves[,i],na.rm = TRUE)
+    }
   }
 
   #t_tot = data$ttot
@@ -1252,65 +1260,130 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   ###################################
 
   # Visualize the estimated birth distribution
-  windows(width = 9,height = 6)
-  par(mar = c(5.1, 5.1, 4.1, 2.1))
-  plot(xax,bdist,type = "n",
-       ylim = c(0,0.5),
-       lwd = 4,
-       col = "royalblue",
-       xlab = "Dates in March",
-       ylab = "Density",
-       bty = "l",
-       main = "Estimated birth distribution",
-       cex.axis = 1.5,
-       cex.lab = 1.5)
-  polygon(x = c(xax,rev(xax)),c(Bdistmin,rev(Bdistmax)),border = NA,
-          col = "lightblue")
-  lines(xax,bdist,col = "royalblue",lwd = 4)
-  lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
-        lwd = 4,lty = 2,col = "black")
+  # Without uncertainty
+  if(!plotCI){
+    windows(width = 9,height = 6)
+    par(mar = c(5.1, 5.1, 4.1, 2.1))
+    plot(xax,bdist,type = "n",
+         ylim = c(0,0.5),
+         lwd = 4,
+         col = "royalblue",
+         xlab = "Dates in March",
+         ylab = "Density",
+         bty = "l",
+         main = "Estimated birth distribution",
+         cex.axis = 1.5,
+         cex.lab = 1.5)
+    lines(xax,bdist,col = "blue",lwd = 4)
+    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+          lwd = 4,lty = 2,col = "black")
+  }
 
-
+  # With uncertainty
+  if(plotCI){
+    windows(width = 9,height = 6)
+    par(mar = c(5.1, 5.1, 4.1, 2.1))
+    plot(xax,bdist,type = "n",
+         ylim = c(0,0.5),
+         lwd = 4,
+         col = "royalblue",
+         xlab = "Dates in March",
+         ylab = "Density",
+         bty = "l",
+         main = "Estimated birth distribution",
+         cex.axis = 1.5,
+         cex.lab = 1.5)
+    polygon(x = c(xax,rev(xax)),c(Bdistmin,rev(Bdistmax)),border = NA,
+            col = "lightblue")
+    lines(xax,bdist,col = "royalblue",lwd = 4)
+    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+          lwd = 4,lty = 2,col = "black")
+  }
   #-----------------------------------------
 
   ### Modelled fit to the observed staging data
 
   # No uncertainty
-  windows(height = 7,width = 9)
-  par(mar=c(6,5,4,5),bg = "white")
-  plot(t_tot,nn1/nn,type = "l",col = "red",lwd = 4,xlim = c(min(days)-5,max(days)+5),ylim = c(0,1),xlab = "Days since 1. March 2012",ylab = "Proportion",cex.lab = 1.5,cex.main = 1.5,bty = "l")
-  lines(t_tot,nn2/nn,col = "blue",lwd = 4)
-  lines(t_tot,nn3/nn,col= "green",lwd = 4)
-  points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
-  points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
-  points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
-  legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
+  if(!plotCI){
+    windows(height = 7,width = 9)
+    par(mar=c(6,5,5,5),bg = "white")
+    plot(t_tot,nn1/nn,type = "l",col = "red",
+         lwd = 4,
+         xlim = c(min(days)-5,max(days)+5),
+         ylim = c(0,1.2),
+         xlab = "Days since 1. March 2012",
+         ylab = "Proportion",
+         main = "Fitted proportions to observed staging data",
+         cex.lab = 1.5,cex.main = 1.5,bty = "l")
+    lines(t_tot,nn2/nn,col = "blue",lwd = 4)
+    lines(t_tot,nn3/nn,col= "green",lwd = 4)
+    points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
+    points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
+    points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
+    lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
+          lwd = 2,lty = 2,col = "black")
+    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    legend('right', lwd=2, col=c("red","blue","green"),lty = c(1,1,1), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
+  }
 
   # With uncertainty
-  windows(height = 7,width = 9)
-  par(mar=c(6,5,4,5),bg = "white")
-  plot(t_tot,nn1/nn,type = "n",
-       col = "red",
-       lwd = 4,
-       xlim = c(min(days)-5,max(days)+5),
-       ylim = c(0,1),xlab = "Days since 1. March 2012",
-       ylab = "Proportion",
-       cex.lab = 1.5,
-       cex.main = 1.5,
-       bty = "l")
-  polygon(x = c(t_tot,rev(t_tot)),c(nn1Propmin,rev(nn1Propmax)),border = NA,
-          col = "lightpink")
-  polygon(x = c(t_tot,rev(t_tot)),c(nn2Propmin,rev(nn2Propmax)),border = NA,
-          col = "lightblue1")
-  polygon(x = c(t_tot,rev(t_tot)),c(nn3Propmin,rev(nn3Propmax)),border = NA,
-          col = "lightgreen")
-  lines(t_tot,nn1/nn,col = "red",lwd = 4)
-  lines(t_tot,nn2/nn,col = "blue",lwd = 4)
-  lines(t_tot,nn3/nn,col= "green",lwd = 4)
-  points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
-  points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
-  points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
-  legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
+  if(plotCI){
+    windows(height = 7,width = 9)
+    par(mar=c(6,5,5,5),bg = "white")
+    plot(t_tot,nn1/nn,type = "n",
+         col = "red",
+         lwd = 4,
+         xlim = c(min(days)-5,max(days)+5),
+         ylim = c(0,1.2),xlab = "Days since 1. March 2012",
+         ylab = "Proportion",
+         main = "to observed staging data",
+         cex.lab = 1.5,
+         cex.main = 1.5,
+         bty = "l")
+    # Find NAs as they separate the polygon in individual
+    # polygons. Want to keep it as one polygon.
+    indNA = which(!is.na(nn1Propmin))
+    polygon(x = c(t_tot[indNA],rev(t_tot[indNA])),c(nn1Propmin[indNA],rev(nn1Propmax[indNA])),border = NA,
+            col = "lightpink")
+
+    indNA = which(!is.na(nn2Propmin))
+    polygon(x = c(t_tot[indNA],rev(t_tot[indNA])),c(nn2Propmin[indNA],rev(nn2Propmax[indNA])),border = NA,
+            col = "lightblue1")
+    polygon(x = c(t_tot[indNA],rev(t_tot[indNA])),c(nn3Propmin[indNA],rev(nn3Propmax[indNA])),border = NA,
+            col = "lightgreen")
+    lines(t_tot,nn1/nn,col = "red",lwd = 4)
+    lines(t_tot,nn2/nn,col = "blue",lwd = 4)
+    lines(t_tot,nn3/nn,col= "green",lwd = 4)
+    points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
+    points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
+    points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
+    lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
+          lwd = 2,lty = 2,col = "black")
+    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
+  }
+
+  if(!plotCI){
+    windows(height = 7,width = 9)
+    par(mar=c(6,5,5,5),bg = "white")
+    plot(t_tot,nn1,type = "l",col = "red",
+         lwd = 4,
+         xlim = c(min(days)-5,max(days)+5),
+         ylim = c(0,1.2),
+         xlab = "Days since 1. March 2012",
+         ylab = "Proportion",
+         main = "Fitted cumulative proportions in various stages",
+         cex.lab = 1.5,cex.main = 1.5,bty = "l")
+    lines(t_tot,nn1+nn2,col = "blue",lwd = 4)
+    lines(t_tot,nn1+nn2+nn3,col= "green",lwd = 4)
+    lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
+          lwd = 2,lty = 2,col = "black")
+    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
+    #plot(t_tot,nn1,type = "l",col= "red",lwd = 2,xlim = c(10,40),ylim = c(0,1.5))
+    #lines(t_tot,nn1+nn2,col = "green",lwd = 2)
+    #lines(t_tot,nn1+nn2+nn3,col = "blue",lwd =2)
+  }
 
   ###################################
   # List of variables to be returned
@@ -1327,11 +1400,87 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   returnList$nn2 = nn2
   returnList$nn3 = nn3
   returnList$nn = nn
-  returnList$nn1PropSd = nn1PropSd
-  returnList$nn2PropSd = nn2PropSd
-  returnList$nn3PropSd = nn3PropSd
-  returnList$nnPropSd = nnPropSd
+  if(plotCI){
+    returnList$nn1PropSd = nn1PropSd
+    returnList$nn2PropSd = nn2PropSd
+    returnList$nn3PropSd = nn3PropSd
+    returnList$nnPropSd = nnPropSd
+  }
 
-return(returnList)
+  return(returnList)
 
 }
+
+#' @param mub Mean of the birth distribution
+#' @param sigmab Sigma for det birth distribution
+#' @param data The data set with photo counts
+#' @param type Type of correction. Use 1 for separate correction for each reader (assumes two readers) and 2 for the same correction for both readers
+#' @return returnList A list containing the fittet proportion curves given the parameters of the birth distribution
+#' @keywords
+#' @export
+#' @examples
+#' propFitFun()
+
+propFitFun <- function(mub = NA,
+                       sigmab = NA,
+                       data = NA,
+                       timeDF = NA)
+{
+
+  # Input parameters
+  spacing = data$spacing
+
+  tm1 = data$tm1
+  phi1 = data$phi1
+  phi2 = data$phi2
+  phi3 = data$phi3
+  cphi1 = data$cphi1
+  cphi2 = data$cphi2
+  cphi3 = data$cphi3
+
+  tau = timeDF$tau
+  tm1 = timeDF$tm1
+  tm2 = timeDF$tm2
+  tm3 = timeDF$tm3
+  tn1 = timeDF$tn1
+  tn2 = timeDF$tn2
+  tn3 = timeDF$tn3
+  t_min = timeDF$t_min
+  t_max = timeDF$t_max
+  t_tot = timeDF$t_tot
+
+  nn2 = array(0,length(t_tot));
+  nn1 = nn2;
+  nn3 = nn2;
+
+  m1 = dnorm(tm1,mub,sigmab)
+  m2 = convolve(m1,rev(phi1),type = "op")*spacing;
+  m2 = m2 / (trapz(1:length(m2),m2)*spacing);
+  m3 = convolve(m2,rev(phi2),type = "op")*spacing;
+  m3 = m3 / (trapz(1:length(m3),m3)*spacing);
+
+
+  n1 = convolve(m1,rev(cphi1),type = "op")*spacing;
+  n2 = convolve(m2,rev(cphi2),type = "op")*spacing;
+  n3 = convolve(m3,rev(cphi3),type = "op")*spacing;
+
+  pos = min(which(t_tot>tn1[1]));
+  nn1[pos:(pos+length(n1)-1)] = n1;
+  pos = min(which(t_tot>=tn2[1]));
+  nn2[pos:(pos+length(n2)-1)] = n2;
+  pos = min(which(t_tot>=tn3[1]));
+  nn3[pos:(pos+length(n3)-1)] = n3;
+
+  nn = nn1+nn2+nn3;
+
+
+  returnList = list()
+  returnList$nn1 = nn1
+  returnList$nn2 = nn2
+  returnList$nn3 = nn3
+  returnList$nn = nn
+
+  return(returnList)
+
+}
+

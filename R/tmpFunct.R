@@ -5,7 +5,7 @@
 #' @param sigmab Sigma for det birth distribution
 #' @param data The data set with photo counts
 #' @param type Type of correction. Use 1 for separate correction for each reader (assumes two readers) and 2 for the same correction for both readers
-#' @return
+#' @return returnList A list containing the fittet proportion curves given the parameters of the birth distribution
 #' @keywords
 #' @export
 #' @examples
@@ -72,7 +72,7 @@ propFitFun <- function(mub = NA,
 
   return(returnList)
 
-  }
+}
 
 
 ############################
