@@ -1411,6 +1411,9 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
 
 }
 
+#' Calculates the fitted staging curves
+#'
+#' Calcculates the fitted staging curves for a given birth distribution
 #' @param mub Mean of the birth distribution
 #' @param sigmab Sigma for det birth distribution
 #' @param data The data set with photo counts
