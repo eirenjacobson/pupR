@@ -12,6 +12,7 @@ birthDist(
   hoodedLengthStages = c(2, 1, 4),
   hoodedKappa = 8.6,
   survey = "WestIce2012",
+  population = "harp",
   datePhoto = 28,
   Nsim = 10000,
   plotCI = FALSE,
@@ -30,6 +31,8 @@ birthDist(
 \item{hoodedKappa}{A shape parameter defining the duration of each stage}
 
 \item{survey}{Name of the survey to be analyzed}
+
+\item{population}{Use harp for the harp seal population and hooded for the hooded seal population. Only one population at the time}
 
 \item{datePhoto}{Date for which the photographic survey was carrie out}
 

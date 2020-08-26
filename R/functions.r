@@ -949,6 +949,7 @@ graphDev = function(width = 7,height = 5) {
 #' @param hoodedfname Filename of the hooded seal staging data
 #' @param hoodedStages Length of each predefined hooded seal stage
 #' @param hoodedKappa A shape parameter defining the duration of each stage
+#' @param population Use harp for the harp seal population and hooded for the hooded seal population. Only one population at the time
 #' @param survey Name of the survey to be analyzed
 #' @param datePhoto Date for which the photographic survey was carrie out
 #' @param Nsim Number of Monte Carlo simulations used to calculate the 95% CI
@@ -967,6 +968,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
                       hoodedLengthStages = c(2,1,4),
                       hoodedKappa = 8.6,
                       survey = "WestIce2012",
+                      population = "harp",
                       datePhoto = 28,
                       Nsim = 10000,
                       plotCI = FALSE,
@@ -1013,7 +1015,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
 
   }
 
-  if("hood" %in% population){
+  if("hooded" %in% population){
 
     filename = paste0("data/",survey,"/",harpfname,"/")
     data = read.table(filename,sep = "",header = TRUE)

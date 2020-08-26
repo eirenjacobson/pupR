@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.r
 \name{loadAndPrepareData}
 \alias{loadAndPrepareData}
-\title{Convert latitude and longitude to Cartesian koordinates}
+\title{Load the pup counts data}
 \usage{
 loadAndPrepareData(
   survey = "WestIce2012",
@@ -24,8 +24,8 @@ loadAndPrepareData(
 
 }
 \description{
-Convert latitude and longitude to Cartesian koordinates
+Load the pup counts data
 }
 \examples{
-lb3xy()
+loadAndPrepareData()
 }
