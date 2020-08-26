@@ -1,4 +1,4 @@
-#' Convert latitude and longitude to Cartesian koordinates
+#' Load the pup counts data
 #'
 #' @param survey Specify which survey to analyze
 #' @param fname File name of data file
@@ -7,7 +7,7 @@
 #' @keywords
 #' @export
 #' @examples
-#' lb3xy()
+#' loadAndPrepareData()
 
 loadAndPrepareData <- function(survey = "WestIce2012",
                                fname = "WestIce2012.csv",
@@ -701,7 +701,7 @@ GAMestimate <- function(harpcounts = NA,
   #HarpGam <- gam(HarpFinalCounts ~ s(xycord$x,xycord$y)+offset(log.area),family=negbin(c(0.1,10)),method=gam.method(gam="outer"),gamma = 1.4)
   if("harp" %in% population){
     cat("\n Fitting GAM to harp pup counts...\n")
-    if("negbin" %in% distr) HarpGam <- mgcv::bam(harpcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
+    if("negbin" %in% distr) HarpGam <- mgcv::bam(harpcounts ~ s(x,y)+offset(log.area),data = data,family=mgcv::nb(theta = NULL,link = "log"),gamma = 1.4)
 
       #HarpGam <- gam(HarpFinalCounts ~ s(x,y)+offset(log.area),data = data,family=negbin(c(0.1,10)),optimizer = "perf",gamma = 1.4)
     #HarpGam$family$getTheta() #Check estimate
@@ -712,7 +712,7 @@ GAMestimate <- function(harpcounts = NA,
   if("hood" %in% population){
     cat("\n Fitting GAM to hooded pup counts...\n")
 
-    if("negbin" %in% distr) HoodedGam <- mgcv::bam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family=nb(theta = NULL,link = "log"),gamma = 1.4)
+    if("negbin" %in% distr) HoodedGam <- mgcv::bam(hoodedcounts ~ s(x,y)+offset(log.area),data = data,family=mgcv::nb(theta = NULL,link = "log"),gamma = 1.4)
 
       #HoodedGam <- gam(HoodedFinalCounts ~ s(x,y)+offset(log.area),data = data,family=negbin(c(0.1,10)),optimizer = "perf",gamma = 1.4)
 

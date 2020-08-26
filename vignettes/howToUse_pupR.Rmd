@@ -26,8 +26,7 @@ knitr::opts_chunk$set(
 library(pupR)
 ```
 # Overview
-The purpose of this vignette is to show how to use the `pupR` package for estimating the pup abundance of harp and hooded seal populations based on aerial photos. It will guide you through how to prepare and read the data, and how to estimate the pup abundance. Also there is a function for finding a correction factor to correct the estimated abundance for pups which have not been born yet or pups that have left ice based on multiple staging data. A complete analysis of a survey caried out on harp and hooded seals in 2012 in the West Ice (along the coast of Greenland) is included to demonstrate the use of this package. In the appendix each method for estimating the abundance and the method for estimating the correction factor is described (maybe add this later if needed...could also just refer to published papers.)
-
+The purpose of this vignette is to show how to use the `pupR` package for estimating the pup abundance of harp and hooded seal populations based on aerial photos. It will guide you through how to prepare and read the data, and how to estimate the pup abundance. Also there is a function for finding a correction factor to correct the estimated abundance for pups which have not been born yet or pups that have left ice based on multiple staging data. A complete analysis of a survey caried out on harp and hooded seals in 2012 in the West Ice (along the coast of Greenland) is included to demonstrate the use of this package. In the appendix each method for estimating the abundance and the method for estimating the correction factor is described.
 
 
 To load the `pupR` package type
@@ -47,15 +46,15 @@ When installing the `pupR` package a demo data set is included so that one can e
 
 To load the demo data:
 ```{r}
-data("harpwestDemo")
+data("pupsDemo")
 ```
 
-<!-- The demo data is a list called `harpeast` containing two lists called `data` and `parameters`. The `data` list contains the data needed to fit the population dynamics model and the `parameters` list contains the parameters estimated by the model along with initial values of them. -->
+The demo data is from a survey carried out in the West Ice in 2012. When loading the demo data you get list containing two lists called `data` and `xycord`. The `data` list contains the pup counts for each photo for both the harp and the hooded population, along with lots of other information such as photo ID, which transect a given photo is etc. See table 1 for a complete overview of the variables in the data list. The `xycord` list contains positions in a cartesian format. 
 
 ```{r}
-names(harpeast$data)
+names(newname$data)
 
-names(harpeast$parameters)
+names(newname$xycord)
 ```
 
 # Full data set
@@ -75,7 +74,7 @@ The latest version of the most recent data on aerial photos of the harps and hoo
 
 
 
-## Data
+## The data files
 All data that is described below will be loaded and used to estimate the pup abundance of the harp and hooded seals from aerial strip transect data. Having the data on a strip transect format is only required by one of the estimation methods. The others are more general and can deal with different sampling formats.
 
 The data set is divided in two parts. One part contains a file where the following information is needed in separate columns:
