@@ -222,10 +222,10 @@ As we now have estimated the birth distribution and obtained the correction fact
 We have combined all the estimates in a list:
 
 ```{r eval=TRUE}
-QHarp = 0.99          # Correction factor for harp seals
-SEQHarp = 0.00014     # Uncertainty of the harp seal correction factor
-QHooded = 0.82        # Correction factor for harp seals
-SEQHooded = 0.0134    # Uncertainty of the harp seal correction factor
+QHarp = bdistHarp$PropIce            # Correction factor for harp seals
+SEQHarp = bdistHarp$PropIceSD        # Uncertainty of the harp seal correction factor
+QHooded = bdistHooded$PropIce        # Correction factor for harp seals
+SEQHooded = bdistHooded$PropIceSD    # Uncertainty of the harp seal correction factor
 
 # Correcting for missing seals
 estimates = list()

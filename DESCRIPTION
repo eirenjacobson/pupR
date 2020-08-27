@@ -26,3 +26,4 @@ Suggests:
   knitr,
   roxygen2,
   rmarkdown
+VignetteBuilder: knitr

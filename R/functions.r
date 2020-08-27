@@ -790,14 +790,14 @@ GAMestimate <- function(harpcounts = NA,
       if(grDev) graphDev(width = width,height = height)
       #image(meshvector,meshvector,matrix(zzHarp,dimX[1],dimX[2]),xlim=c(-30,30),ylim = c(-45,40),xlab = "Relative position (nm)",ylab = "Relative position (nm)",main = "Spacial distribution of harp seal pups")
       #contour(meshvector,meshvector,matrix(zzHarp,dimX[1],dimX[1]),add=TRUE)
-      ff <- ggplot(harpDF,aes(x=x,y=y)) + geom_raster(aes(fill=mean)) + ggtitle("Spacial distribution of harp seal pups") + xlab("Relative position (nm)") +  ylab("Relative position (nm)")
-      ff <- ff +  scale_fill_gradientn(colours=heat.colors(256,rev=T))
-      ff <- ff + theme_bw() + theme(plot.title = element_text(size = 18,
+      ff <- ggplot2::ggplot(harpDF,ggplot2::aes(x=x,y=y)) + ggplot2::geom_raster(ggplot2::aes(fill=mean)) + ggplot2::ggtitle("Spacial distribution of harp seal pups") + ggplot2::xlab("Relative position (nm)") +  ggplot2::ylab("Relative position (nm)")
+      ff <- ff +  ggplot2::scale_fill_gradientn(colours=heat.colors(256,rev=T))
+      ff <- ff + ggplot2::theme_bw() + ggplot2::theme(plot.title = ggplot2::element_text(size = 18,
                                                               face = "bold",
-                                                              vjust = 5),axis.title.y = element_text(vjust = 5), axis.title.x = element_text(vjust = -5), axis.text=element_text(size=14),
-                                    axis.title=element_text(size=16),
-                                    legend.text = element_text(size=12),
-                                    legend.title = element_text(size=16) ,plot.margin=unit(c(1,1,1.5,1.2),"cm"),panel.border = element_blank())
+                                                              vjust = 5),axis.title.y = ggplot2::element_text(vjust = 5), axis.title.x = ggplot2::element_text(vjust = -5), axis.text=ggplot2::element_text(size=14),
+                                    axis.title=ggplot2::element_text(size=16),
+                                    legend.text = ggplot2::element_text(size=12),
+                                    legend.title = ggplot2::element_text(size=16) ,plot.margin=ggplot2::unit(c(1,1,1.5,1.2),"cm"),panel.border = ggplot2::element_blank())
       print(ff)
     }
 
@@ -839,14 +839,14 @@ GAMestimate <- function(harpcounts = NA,
       if(grDev) graphDev(width = width,height = height)
       #image(meshvector,meshvector,matrix(zzHooded,dimX[1],dimX[2]),xlim=c(-30,30),ylim = c(-45,40),xlab = "Relative position (nm)",ylab = "Relative position (nm)",main = "Spatial distribution of hooded seal pups")
       #contour(meshvector,meshvector,matrix(zzHooded,dimX[1],dimX[1]),add=TRUE)
-      ff <- ggplot(hoodedDF,aes(x=x,y=y)) + geom_raster(aes(fill=mean)) + ggtitle("Spacial distribution of hooded seal pups") + xlab("Relative position (nm)") +  ylab("Relative position (nm)")
-      ff <- ff +  scale_fill_gradientn(colours=heat.colors(256,rev=T))
-      ff <- ff + theme_bw() + theme(plot.title = element_text(size = 18,
+      ff <- ggplot2::ggplot(hoodedDF,ggplot2::aes(x=x,y=y)) + ggplot2::geom_raster(ggplot2::aes(fill=mean)) + ggplot2::ggtitle("Spacial distribution of hooded seal pups") + ggplot2::xlab("Relative position (nm)") +  ggplot2::ylab("Relative position (nm)")
+      ff <- ff +  ggplot2::scale_fill_gradientn(colours=heat.colors(256,rev=T))
+      ff <- ff + ggplot2::theme_bw() + ggplot2::theme(plot.title = ggplot2::element_text(size = 18,
                                                               face = "bold",
-                                                              vjust = 5),axis.title.y = element_text(vjust = 5), axis.title.x = element_text(vjust = -5), axis.text=element_text(size=14),
-                                    axis.title=element_text(size=16),
-                                    legend.text = element_text(size=12),
-                                    legend.title = element_text(size=16) ,plot.margin=unit(c(1,1,1.5,1.2),"cm"),panel.border = element_blank())
+                                                              vjust = 5),axis.title.y = ggplot2::element_text(vjust = 5), axis.title.x = ggplot2::element_text(vjust = -5), axis.text=ggplot2::element_text(size=14),
+                                    axis.title=ggplot2::element_text(size=16),
+                                    legend.text = ggplot2::element_text(size=12),
+                                    legend.title = ggplot2::element_text(size=16) ,plot.margin=ggplot2::unit(c(1,1,1.5,1.2),"cm"),panel.border = ggplot2::element_blank())
       print(ff)
     }
 
@@ -1017,8 +1017,9 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
 
   if("hooded" %in% population){
 
-    filename = paste0("data/",survey,"/",harpfname,"/")
+    filename = paste0("Data/",survey,"/",hoodedfname)
     data = read.table(filename,sep = "",header = TRUE)
+
     days = data$Date
     ndays = length(days)
 
@@ -1147,7 +1148,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   #-----------------------------------
 
 
-  obj <- TMB::MakeADFun(data,parameters,DLL="birthDist",checkParameterOrder = FALSE)
+  obj <- TMB::MakeADFun(data,parameters,DLL="pupR",checkParameterOrder = FALSE)
 
   #obj$fn()
   #obj$gr()
@@ -1175,6 +1176,8 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   sigmab = rep.matrix[indsigmab,1]
   sigmabsd = rep.matrix[indsigmab,2]
 
+  xax = seq(mub-3*sigmab,mub+3*sigmab,by = 0.1)
+  bdist = dnorm(xax,mub,sigmab)
   #####################################
   # Monte Carlo simulations to show
   # the uncertainty in the birth distribution
