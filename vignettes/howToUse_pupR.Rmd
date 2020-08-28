@@ -52,9 +52,7 @@ data("pupsDemoData")
 The demo data is from a survey carried out in the West Ice in 2012. When loading the demo data you get list containing two lists called `data` and `xycord`. The `data` list contains the pup counts for each photo for both the harp and the hooded population, along with lots of other information such as photo ID, which transect a given photo is etc. See table 1 for a complete overview of the variables in the data list. The `xycord` list contains positions in a cartesian format. 
 
 ```{r}
-names(newname$data)
-
-names(newname$xycord)
+names(demoData)
 ```
 
 # Full data set
@@ -97,7 +95,7 @@ To load the data set we use the `loadAndPrepareData` function. To read the data 
 
 This function not only loads the data but does some preparations of the data to make it ready for the estimation routines.
 
-```{r eval=TRUE}
+```{r eval=FALSE}
 dataList = loadAndPrepareData(survey = "WestIce2012",
                                 fname = "WestIce2012.csv",
                                 population = c("harp","hood"))
@@ -105,6 +103,13 @@ dataList = loadAndPrepareData(survey = "WestIce2012",
 The function writes out information of the proportion of seals
 
 Next we correct the pup counts for readers error using the `correctReading` function, i.e., 
+
+
+```{r eval=TRUE,echo=FALSE}
+dataList = demoData$dataList
+harpStages = demoData$harpStages
+hoodedStages = demoData$HoodedStages
+```
 
 ```{r eval=TRUE}
 correctedList = correctReading(dataList = dataList)
@@ -156,19 +161,19 @@ VarHarpCorr = EstHarpCorr$SE^2+correctedList$VmeasHarp
 VarHoodedCorr = EstHoodedCorr$SE^2+correctedList$VmeasHooded
 
 ```
-A quick summary of the estimated number of pups with the uncertainty is:
+<!-- A quick summary of the estimated number of pups with the uncertainty is: -->
 
-```{r eval=TRUE, echo=TRUE}
-cat("\n###############################\n")
-cat("Estimated number of harp seal pups:\n")
-cat(paste0("    Uncorected pup counts: N = ",EstHarp$N," (SE =",EstHarp$SE," CV = ",EstHarp$CV,")\n"))
-cat(paste0("    Corrected pup counts:  N = ",EstHarpCorr$N," (SE =",round(sqrt(VarHarpCorr))," CV = ",round(100*sqrt(VarHarpCorr)/EstHarpCorr$N),")\n"))
-cat("\n ------------------------------\n")
-cat("Estimated number of hooded seal pups:\n")
-cat(paste0("    Uncorected pup counts: N = ",EstHooded$N," (SE =",EstHooded$SE," CV = ",EstHooded$CV,")\n"))
-cat(paste0("    Corrected pup counts:  N = ",EstiHooded$N," (SE =",round(sqrt(VarHoodedCorr))," CV = ",round(100*sqrt(VarHoodedCorr)/EstHoodedCorr$N),")\n"))
-cat("\n###############################\n")
-```
+<!-- ```{r eval=TRUE, echo=TRUE} -->
+<!-- cat("\n###############################\n") -->
+<!-- cat("Estimated number of harp seal pups:\n") -->
+<!-- cat(paste0("    Uncorected pup counts: N = ",EstHarp$N," (SE =",EstHarp$SE," CV = ",EstHarp$CV,")\n")) -->
+<!-- cat(paste0("    Corrected pup counts:  N = ",EstHarpCorr$N," (SE =",round(sqrt(VarHarpCorr))," CV = ",round(100*sqrt(VarHarpCorr)/EstHarpCorr$N),")\n")) -->
+<!-- cat("\n ------------------------------\n") -->
+<!-- cat("Estimated number of hooded seal pups:\n") -->
+<!-- cat(paste0("    Uncorected pup counts: N = ",EstHooded$N," (SE =",EstHooded$SE," CV = ",EstHooded$CV,")\n")) -->
+<!-- cat(paste0("    Corrected pup counts:  N = ",EstiHooded$N," (SE =",round(sqrt(VarHoodedCorr))," CV = ",round(100*sqrt(VarHoodedCorr)/EstHoodedCorr$N),")\n")) -->
+<!-- cat("\n###############################\n") -->
+<!-- ``` -->
 
 ### GAM based pup abundance
 
@@ -221,32 +226,18 @@ To estimate the birth distribution along with the correction factor for the date
 
 ```{r eval=TRUE}
 #Estimating the birth distribution for the harp seals
-bdistHarp = birthDist(harpfname = "HarpStages2012.txt",
+bdistHarp = birthDist(data = harpStages,
                       harpLengthStages = c(2.4,4.42,11.39),
                       harpKappa = 12.4,
-                      hoodedfname = "HoodStages2012.txt",
-                      hoodedLengthStages = c(2,1,4),
-                      hoodedKappa = 8.6,
-                      survey = "WestIce2012",
                       population = "harp",
-                      datePhoto = 28,
-                      Nsim = 10000,
-                      plotCI = FALSE,
-                      grDev = TRUE)
+                      datePhoto = 28)
 
 #Estimating the birth distribution for the hooded seals
-bdistHooded = birthDist(harpfname = "HarpStages2012.txt",
-                  harpLengthStages = c(2.4,4.42,11.39),
-                  harpKappa = 12.4,
-                  hoodedfname = "HoodStages2012.txt",
-                  hoodedLengthStages = c(2,1,4),
-                  hoodedKappa = 8.6,
-                  survey = "WestIce2012",
-                  population = "hooded",
-                  datePhoto = 28,
-                  Nsim = 10000,
-                  plotCI = FALSE,
-                  grDev = TRUE)
+bdistHooded = birthDist(data = hoodedStages,
+                        hoodedLengthStages = c(2,1,4),
+                      hoodedKappa = 8.6,
+                      population = "hooded",
+                      datePhoto = 28)
 
 ```
 
