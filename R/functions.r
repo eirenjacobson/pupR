@@ -1154,7 +1154,7 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
   #obj$gr()
   system.time(opt <- nlminb(obj$par,obj$fn,obj$gr,control = list(eval.max = 1e6,maxit = 1e6)))
 
-  rep<-sdreport(obj, getJointPrecision=TRUE)
+  rep<-TMB::sdreport(obj, getJointPrecision=TRUE)
   rep.matrix <- summary(rep)
   rep.rnames = rownames(rep.matrix)
 
