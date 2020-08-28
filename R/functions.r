@@ -949,6 +949,7 @@ graphDev = function(width = 7,height = 5) {
 #' @param hoodedfname Filename of the hooded seal staging data
 #' @param hoodedStages Length of each predefined hooded seal stage
 #' @param hoodedKappa A shape parameter defining the duration of each stage
+#' @param data Staging data frame containing the colums date and numbers in various stages. See demo data.
 #' @param population Use harp for the harp seal population and hooded for the hooded seal population. Only one population at the time
 #' @param survey Name of the survey to be analyzed
 #' @param datePhoto Date for which the photographic survey was carrie out
@@ -961,13 +962,14 @@ graphDev = function(width = 7,height = 5) {
 #' @examples
 #' birtDist()
 
-birthDist <- function(harpfname = "HarpStages2012.txt",
+birthDist <- function(harpfname = NA,
                       harpLengthStages = c(2.4,4.42,11.39),
                       harpKappa = 12.4,
-                      hoodedfname = "HoodStages2012.txt",
+                      hoodedfname = NA,
                       hoodedLengthStages = c(2,1,4),
                       hoodedKappa = 8.6,
-                      survey = "WestIce2012",
+                      data = NA,
+                      survey = NA,
                       population = "harp",
                       datePhoto = 28,
                       Nsim = 10000,
@@ -975,15 +977,20 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
                       grDev = TRUE)
 {
 
+  if(!is.na(harpfname)){
+    filename = paste0("Data/",survey,"/",harpfname)
+    data = read.table(filename,sep = "",header = TRUE)
+  }
+
+  if(!is.na(hoodedfname)){
+    filename = paste0("Data/",survey,"/",hoodedfname)
+    data = read.table(filename,sep = "",header = TRUE)
+  }
 
   if("harp" %in% population){
 
-    filename = paste0("Data/",survey,"/",harpfname)
-
-    data = read.table(filename,sep = "",header = TRUE)
     days = data$Date
     ndays = length(days)
-
 
     length_stage1 = harpLengthStages[1]
     length_stage2 = harpLengthStages[2]
@@ -1017,8 +1024,6 @@ birthDist <- function(harpfname = "HarpStages2012.txt",
 
   if("hooded" %in% population){
 
-    filename = paste0("Data/",survey,"/",hoodedfname)
-    data = read.table(filename,sep = "",header = TRUE)
 
     days = data$Date
     ndays = length(days)

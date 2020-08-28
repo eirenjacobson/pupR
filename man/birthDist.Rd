@@ -5,13 +5,14 @@
 \title{Estimate the temporal distribution of births}
 \usage{
 birthDist(
-  harpfname = "HarpStages2012.txt",
+  harpfname = NA,
   harpLengthStages = c(2.4, 4.42, 11.39),
   harpKappa = 12.4,
-  hoodedfname = "HoodStages2012.txt",
+  hoodedfname = NA,
   hoodedLengthStages = c(2, 1, 4),
   hoodedKappa = 8.6,
-  survey = "WestIce2012",
+  data = NA,
+  survey = NA,
   population = "harp",
   datePhoto = 28,
   Nsim = 10000,
@@ -29,6 +30,8 @@ birthDist(
 \item{hoodedfname}{Filename of the hooded seal staging data}
 
 \item{hoodedKappa}{A shape parameter defining the duration of each stage}
+
+\item{data}{Staging data frame containing the colums date and numbers in various stages. See demo data.}
 
 \item{survey}{Name of the survey to be analyzed}
 

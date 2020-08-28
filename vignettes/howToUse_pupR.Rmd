@@ -46,7 +46,7 @@ When installing the `pupR` package a demo data set is included so that one can e
 
 To load the demo data:
 ```{r}
-data("pupsDemo")
+data("pupsDemoData")
 ```
 
 The demo data is from a survey carried out in the West Ice in 2012. When loading the demo data you get list containing two lists called `data` and `xycord`. The `data` list contains the pup counts for each photo for both the harp and the hooded population, along with lots of other information such as photo ID, which transect a given photo is etc. See table 1 for a complete overview of the variables in the data list. The `xycord` list contains positions in a cartesian format. 
@@ -215,7 +215,42 @@ VarHoodedGAMCorr = EstGAMCorr$SEHoodedGAM^2+correctedList$VmeasHooded
 
 ## Estimating the birth distribution - the correction factor
 
-In this section we will see how you can estimate the correction factor to correct for pups which have not been born yet or pups that have left the ice. The correction factor is estimated from a different data set than the aerial photos. The data needed is staging data. This is obtained by flying over the whelping patch for a period of time and count the number of pups in various pre-defined age/growt stages with known length, see Appendix for details. This applies for both populations, but each population are divided in different stage classes and the length of the various stages are different. After the pups reach a certain mature stage it is assumed that the pup leaves the ice, and is thus unavailable for counting if the aerial photo survey are carried out after the pups have left the ice. Based on this data and the known length of the various stages one can estimate the date of the peak of the whelping season and through a model developed by (ref) one can estimate the number of pups on the ice at any date in the whelping season. 
+In this section we will demonstrate how you can estimate the correction factor to correct for pups which have not been born yet or pups that have left the ice. The correction factor is estimated from a different data set than the aerial photos. The data needed is staging data. These data is obtained by flying over the whelping patch for a period of time and count the number of pups in various pre-defined age/growt stages with known length, see Appendix for model details. This applies for both populations, but each population are divided in different stage classes and the length of the various stages are different. After the pups reach a certain mature stage it is assumed that the pup leaves the ice, and is thus unavailable for counting if the aerial photo survey are carried out after the pups have left the ice. Based on these data and the known length of the various stages one can estimate the date of the peak of the whelping season and through a model developed by (ref) one can estimate the number of pups on the ice at any date in the whelping season. 
+
+To estimate the birth distribution along with the correction factor for the date of the photographic survey we use the `birthDist` function, i.e., 
+
+```{r eval=TRUE}
+#Estimating the birth distribution for the harp seals
+bdistHarp = birthDist(harpfname = "HarpStages2012.txt",
+                      harpLengthStages = c(2.4,4.42,11.39),
+                      harpKappa = 12.4,
+                      hoodedfname = "HoodStages2012.txt",
+                      hoodedLengthStages = c(2,1,4),
+                      hoodedKappa = 8.6,
+                      survey = "WestIce2012",
+                      population = "harp",
+                      datePhoto = 28,
+                      Nsim = 10000,
+                      plotCI = FALSE,
+                      grDev = TRUE)
+
+#Estimating the birth distribution for the hooded seals
+bdistHooded = birthDist(harpfname = "HarpStages2012.txt",
+                  harpLengthStages = c(2.4,4.42,11.39),
+                  harpKappa = 12.4,
+                  hoodedfname = "HoodStages2012.txt",
+                  hoodedLengthStages = c(2,1,4),
+                  hoodedKappa = 8.6,
+                  survey = "WestIce2012",
+                  population = "hooded",
+                  datePhoto = 28,
+                  Nsim = 10000,
+                  plotCI = FALSE,
+                  grDev = TRUE)
+
+```
+
+Note that we have to estimate the birth distribution separately for each population.
 
 As we now have estimated the birth distribution and obtained the correction factor for the date when the aerial survey was carried out we can obtain a pup abundance estimated adusted for pups that have not been born yet and pups that have left the ice. Earlier we found a total uncertainty of the estimated pup abundance (not adjusted for missing seals) when using the readers corrected pup counts by combining the uncertainty in the estimation procedure and the uncertainty of the readers correction. We need to do the same for the final pup abundance estimate which adjusts for missing seals based on the readers corrected data. 
 
