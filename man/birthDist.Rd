@@ -17,7 +17,9 @@ birthDist(
   datePhoto = 28,
   Nsim = 10000,
   plotCI = FALSE,
-  grDev = TRUE
+  grDev = FALSE,
+  grWidth = 9,
+  grHeight = 6
 )
 }
 \arguments{
@@ -44,6 +46,10 @@ birthDist(
 \item{plotCI}{Plot with or without 95% CI. Default is FALSE}
 
 \item{grDev}{Load a graphical device}
+
+\item{grWidth}{Width of graphical window}
+
+\item{grHeight}{Height of graphical window}
 
 \item{hoodedStages}{Length of each predefined hooded seal stage}
 }

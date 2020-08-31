@@ -12,7 +12,9 @@ correctReading(
   plotFig = TRUE,
   Spacing = 3,
   gap = 1,
-  grDev = TRUE
+  grDev = FALSE,
+  grWidth = 11,
+  grHeight = 7
 )
 }
 \arguments{
@@ -22,13 +24,19 @@ correctReading(
 
 \item{readers}{Specify the ID of each reader. Assumes 2 readers}
 
+\item{plotFig}{Vector containing the transect each photo comes from}
+
 \item{Spacing}{Transect width}
 
 \item{gap}{Distance threshold for length if flown over open water}
 
-\item{data}{The data set with photo counts}
+\item{grDev}{Open a graphical device or not (default FALSE)}
 
-\item{transect}{Vector containing the transect each photo comes from}
+\item{grWidth}{Width of graphical window}
+
+\item{grHeight}{Height of graphical window}
+
+\item{data}{The data set with photo counts}
 }
 \value{
 

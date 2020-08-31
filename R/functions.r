@@ -363,14 +363,12 @@ vmeasest <- function(x,
 #' @param type Type of correction. Use 1 for separate correction for each reader (assumes two readers) and 2 for the same correction for both readers
 #' @param population Specify which population or populations to estimate the uncertainty from
 #' @param readers Specify the ID of each reader. Assumes 2 readers
-#' @param transect Vector containing the transect each photo comes from
+#' @param plotFig Vector containing the transect each photo comes from
 #' @param Spacing Transect width
 #' @param gap Distance threshold for length if flown over open water
-#' @param var_b
-#' @param var_u
-#' @param var_a
-#' @param cov_ab
-#' @param intcpt
+#' @param grDev Open a graphical device or not (default FALSE)
+#' @param grWidth Width of graphical window
+#' @param grHeight Height of graphical window
 #' @return
 #' @keywords
 #' @export
@@ -384,7 +382,9 @@ correctReading <- function(dataList,
                            plotFig = TRUE,
                            Spacing = 3,
                            gap = 1,
-                           grDev = TRUE)
+                           grDev = FALSE,
+                           grWidth = 11,
+                           grHeight = 7)
 
   {
 
@@ -401,7 +401,7 @@ correctReading <- function(dataList,
       lincorrHarpLL = lm(WPTrue[indcorrHarpLL]~HarpFinalCounts[indcorrHarpLL] - 1,data = data)
       if(plotFig){
         #windows(width = 11,height = 7)
-        if(grDev) graphDev(width = width,height = height)
+        if(grDev) graphDev(width = grWidth,height = grHeight)
         plot(data$HarpFinalCounts[indcorrHarpLL],data$WPTrue[indcorrHarpLL],xlab = "Harp seal pup counts",ylab = "True number of harp seal pups",main = "Linear fit of uncorrected counts to true number of pups",sub = "Reader 1")
         abline(a = 0, b = lincorrHarpLL$coefficients,lwd = 3,col = "red")
       }
@@ -412,7 +412,7 @@ correctReading <- function(dataList,
       lincorrHoodedLL = lm(data$BBTrue[indcorrHoodedLL]~data$HoodedFinalCounts[indcorrHoodedLL] - 1)
       if(plotFig){
         #windows(width = 11,height = 7)
-        if(grDev) graphDev(width = width,height = height)
+        if(grDev) graphDev(width = grWidth,height = grHeight)
 
         plot(data$HoodedFinalCounts[indcorrHoodedLL],data$BBTrue[indcorrHoodedLL],xlab = "Hooded seal pup counts",ylab = "True number of hooded pups",main = "Linear fit of uncorrected counts to true number of pups",sub = "Reader 1")
         abline(a = 0, b = lincorrHoodedLL$coefficients,lwd = 3,col = "red")
@@ -448,7 +448,7 @@ correctReading <- function(dataList,
       lincorrHarpMP = lm(data$WPTrue[indcorrHarpMP]~data$HarpFinalCounts[indcorrHarpMP] - 1)
       if(plotFig){
         #windows(width = 11,height = 7)
-        if(grDev) graphDev(width = width,height = height)
+        if(grDev) graphDev(width = grWidth,height = grHeight)
         plot(data$HarpFinalCounts[indcorrHarpMP],data$WPTrue[indcorrHarpMP],xlab = "Harp seal pup counts",ylab = "True number of harp seal pups",main = "Linear fit of uncorrected counts to true number of pups",sub = "Reader 2")
         abline(a = 0, b = lincorrHarpMP$coefficients,lwd = 3,col = "red")
       }
@@ -514,7 +514,7 @@ correctReading <- function(dataList,
       indcorrHarp = which(1-is.na(data$WPTrue)==1)			#Find which photos have been checked by both readers
       lincorrHarp = lm(data$WPTrue[indcorrHarp]~data$HarpFinalCounts[indcorrHarp])
       if(plotFig){
-        windows(width = 11,height = 7)
+        if(grDev) graphDev(width = grWidth,height = grHight)
         plot(data$HarpFinalCounts[indcorrHarp],data$WPTrue[indcorrHarp],xlab = "Harp seal pup counts",ylab = "True number of harp seal pups",main = "Linear fit of uncorrected counts to true number of harp seal pups")
         abline(a = 0, b = lincorrHarp$coefficients,lwd = 3,col = "red")
       }
@@ -531,7 +531,7 @@ correctReading <- function(dataList,
       indcorrHooded = which(1-is.na(data$BBTrue)==1)			#Find which photos have been checked by both readers
       lincorrHooded = lm(data$BBTrue[indcorrHooded]~data$HoodedFinalCounts[indcorrHooded])
       if(plotFig){
-        windows(width = 11,height = 7)
+        if(grDev) graphDev(width = 11,height = 7)
         plot(data$HoodedFinalCounts[indcorrHooded],data$BBTrue[indcorrHooded],xlab = "Hooded seal pup counts",ylab = "True number of hooded seal pups",main = "Linear fit of uncorrected counts to true number of hooded seal pups")
         abline(a = 0, b = lincorrHooded$coefficients,lwd = 3,col = "red")
       }
@@ -678,7 +678,9 @@ GAMestimate <- function(harpcounts = NA,
                         Spacing = 3,
                         ds = 0.1,
                         plotMesh = TRUE,
-                        grDev = TRUE)
+                        grDev = FALSE,
+                        grWidth = 11,
+                        grHeight = 7)
 {
 
   #data = dataList$data
@@ -787,7 +789,7 @@ GAMestimate <- function(harpcounts = NA,
       indNA = is.na(harpDF$mean)
       harpDF = harpDF[-which(indNA),]
       #harpDF$mean[is.na(harpDF$mean)] = 255
-      if(grDev) graphDev(width = width,height = height)
+      if(grDev) graphDev(width = grWidth,height = grHeight)
       #image(meshvector,meshvector,matrix(zzHarp,dimX[1],dimX[2]),xlim=c(-30,30),ylim = c(-45,40),xlab = "Relative position (nm)",ylab = "Relative position (nm)",main = "Spacial distribution of harp seal pups")
       #contour(meshvector,meshvector,matrix(zzHarp,dimX[1],dimX[1]),add=TRUE)
       ff <- ggplot2::ggplot(harpDF,ggplot2::aes(x=x,y=y)) + ggplot2::geom_raster(ggplot2::aes(fill=mean)) + ggplot2::ggtitle("Spacial distribution of harp seal pups") + ggplot2::xlab("Relative position (nm)") +  ggplot2::ylab("Relative position (nm)")
@@ -927,15 +929,15 @@ graphDev = function(width = 7,height = 5) {
 
   system = Sys.info()
   if(system['sysname']=="Windows"){
-    windows(width = 7,height = 5)
+    windows(width = width,height = height)
   }
 
   if(system['sysname']=="Linux"){
-    X11(width = 7,height = 5)
+    X11(width = width,height = height)
   }
 
   if(system['sysname']=="Darwin"){
-    quartz("",width = 7,height = 5)
+    quartz("",width = width,height = heigth)
   }
 }
 
@@ -956,6 +958,8 @@ graphDev = function(width = 7,height = 5) {
 #' @param Nsim Number of Monte Carlo simulations used to calculate the 95% CI
 #' @param plotCI Plot with or without 95% CI. Default is FALSE
 #' @param grDev Load a graphical device
+#' @param grWidth Width of graphical window
+#' @param grHeight Height of graphical window
 #' @return returnList A list containing the estimated mean and std of the birth distribution, the estimated proportions of seals on ice at the time of the photographic survey, and the estimated model fits to the observed staging data.
 #' @keywords
 #' @export
@@ -974,7 +978,9 @@ birthDist <- function(harpfname = NA,
                       datePhoto = 28,
                       Nsim = 10000,
                       plotCI = FALSE,
-                      grDev = TRUE)
+                      grDev = FALSE,
+                      grWidth = 9,
+                      grHeight = 6)
 {
 
   if(!is.na(harpfname)){
@@ -1272,7 +1278,7 @@ birthDist <- function(harpfname = NA,
   # Visualize the estimated birth distribution
   # Without uncertainty
   if(!plotCI){
-    windows(width = 9,height = 6)
+    if(grDev) graphDev(width = grWidth,height = grHeight)
     par(mar = c(5.1, 5.1, 4.1, 2.1))
     plot(xax,bdist,type = "n",
          ylim = c(0,0.5),
@@ -1291,7 +1297,7 @@ birthDist <- function(harpfname = NA,
 
   # With uncertainty
   if(plotCI){
-    windows(width = 9,height = 6)
+    if(grDev) graphDev(width = grWidth,height = grHeight)
     par(mar = c(5.1, 5.1, 4.1, 2.1))
     plot(xax,bdist,type = "n",
          ylim = c(0,0.5),
@@ -1315,7 +1321,7 @@ birthDist <- function(harpfname = NA,
 
   # No uncertainty
   if(!plotCI){
-    windows(height = 7,width = 9)
+    if(grDev) graphDev(width = grWidth,height = grHeight)
     par(mar=c(6,5,5,5),bg = "white")
     plot(t_tot,nn1/nn,type = "l",col = "red",
          lwd = 4,
@@ -1338,7 +1344,7 @@ birthDist <- function(harpfname = NA,
 
   # With uncertainty
   if(plotCI){
-    windows(height = 7,width = 9)
+    if(grDev) graphDev(width = grWidth,height = grHight)
     par(mar=c(6,5,5,5),bg = "white")
     plot(t_tot,nn1/nn,type = "n",
          col = "red",
@@ -1374,7 +1380,7 @@ birthDist <- function(harpfname = NA,
   }
 
   if(!plotCI){
-    windows(height = 7,width = 9)
+    if(grDev) graphDev(width = grWidth,height = grHight)
     par(mar=c(6,5,5,5),bg = "white")
     plot(t_tot,nn1,type = "l",col = "red",
          lwd = 4,

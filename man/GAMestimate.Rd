@@ -15,7 +15,9 @@ GAMestimate(
   Spacing = 3,
   ds = 0.1,
   plotMesh = TRUE,
-  grDev = TRUE
+  grDev = FALSE,
+  grWidth = 11,
+  grHeight = 7
 )
 }
 \arguments{

@@ -6,6 +6,8 @@ output:
   rmarkdown::html_vignette:
     toc: true
     number_sections: true
+    bibliography: 'library.bib'
+csl: 'ices-journal-of-marine-science.csl'
 vignette: >
     %\VignetteIndexEntry{How to use the `pupR` package}
     %\VignetteEngine{knitr::rmarkdown}
@@ -36,7 +38,11 @@ library(pupR)
 
 # Data used and how to load them
 
-The population dynamics model use historical catch records, fecundity rates, age specific proportions of mature females, and estimates of pup production to estimate the population size trajectory. Two types of reproductive data are used in the model: information on the proportion of females that are mature at a given age (i.e., maturity ogive) and the proportion of mature females that are pregnant at a given year (i.e. fecundity rate). In this section we will describe what type of data is used, which data files are needed, and the format the various data are stored.
+To estimate the pup abundance of harp and hooded seals we take aerial photos over the whelping patch. The number of pups are counted on each photo either manually or through machine learning techniques. The whelping patch is normally a large area so it is hard to cover the complete patch with aerial photos. Instead strip transects with a certain distance between tracs are flown. There is also no complete coverage of each transect by aerial photos. So we use different estimation techniques (described in this vignette) to estimate the total number of pups born from the sampled aera.
+
+The whelping season lasts for several weeks so at the time of conducting the aerial survey you might risk that some seals has already matured enough to have left the ice and some seals might not have been born yet. This means that the estimate you have obtained from the aerial photos is underestimated. However due to knowledghe of the length of various age stages (some stages lasts for hours, and others for days) one can estimate a correction factor to scale up the estimated obtained from aerial photos to include missing seals.
+
+So, to get an estimate of the total abundance of seal pups you need two data sets. One from the aerial photos, and another where you over a period of time inspect the whelping patch and count the number of seals in the various age stage groups. 
 
 
 ## Demo data
@@ -49,7 +55,7 @@ To load the demo data:
 data("pupsDemoData")
 ```
 
-The demo data is from a survey carried out in the West Ice in 2012. When loading the demo data you get list containing two lists called `data` and `xycord`. The `data` list contains the pup counts for each photo for both the harp and the hooded population, along with lots of other information such as photo ID, which transect a given photo is etc. See table 1 for a complete overview of the variables in the data list. The `xycord` list contains positions in a cartesian format. 
+The demo data is from a survey carried out in the West Ice in 2012. When loading the demo data you get a list containing three elements. One element is a list containing the counts from the aerial photos, `dataList`. The other two elements, called `HarpStages` and `HoodedStages` contains the staging data for the harp and hooded seals, respectievely. The `dataList` list contains the pup counts for each photo for both the harp and the hooded population, along with lots of other information such as photo ID, which transect a given photo is etc. See table 1 for a complete overview of the variables in the data list.  
 
 ```{r}
 names(demoData)
@@ -107,7 +113,7 @@ Next we correct the pup counts for readers error using the `correctReading` func
 
 ```{r eval=TRUE,echo=FALSE}
 dataList = demoData$dataList
-harpStages = demoData$harpStages
+harpStages = demoData$HarpStages
 hoodedStages = demoData$HoodedStages
 ```
 
@@ -153,7 +159,7 @@ EstHoodedCorr = kingsley(correctedList$xycord$x,
 ```
 The output of the `kingsley` function is a data frame containing the estimated number of pups N, the standard error SE, and the coefficient of variation CV. 
 
-When correcting for readers errors one estimate an uncertainty of the readers correction. This is obtained from either `VmeasHarp`or `VmeasHooded` in the output list from the `correctReading` function. Thus, both the Kingsley method and correcting for readers errors has an uncertainty, and to find the total uncertainty of the estimated pup abundance one need to combine these uncertainties, i.e.,
+When correcting for readers errors one estimate an uncertainty of the readers correction. This is obtained from either `VmeasHarp` or `VmeasHooded` in the output list from the `correctReading` function. Thus, both the Kingsley method and correcting for readers errors has an uncertainty, and to find the total uncertainty of the estimated pup abundance one need to combine these uncertainties, i.e.,
 
 ```{r eval=TRUE}
 #Total uncertainty estimate of pup estimation + uncertainty of reader errors
@@ -183,7 +189,7 @@ To estimate the pup abundance using GAMs we use the `GAMestimate` function. As w
 
 In addition we have to specify for which distribution to use in the model. At the moment one can choose between the *Poisson-* or the *Negative binomial-* distributions, depending on the sparsity of the data. In this example we use the negative binomial distribution.
 
-To estimate the pup abundance using uncorrected pup counts we do:
+To estimate the pup abundance using uncorrected pup counts:
 
 ```{r eval=TRUE}
 EstGAM = GAMestimate(harpcounts =
@@ -208,7 +214,7 @@ EstGAMCorr = GAMestimate(harpcounts =
                          distr = "negbin")
 ```
 
-We could do the same, but with a Poisson distribution and then check the goodnes-off-fit for the different models. If you do that it will show that the Negative Binomial distribution is a better model due to over-dispersion.
+We could do the same with a Poisson distribution, and then check the goodnes-off-fit for the different models. If you do that it will show that the Negative Binomial distribution is a better model due to over-dispersion.
 
 The total uncertainty estimate of the pup abundance using GAMs using corrected pup counts is:
 
