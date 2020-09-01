@@ -1,4 +1,3 @@
-```{r eval = TRUE}
 # This script show an example of a complete pup production
 # estimation using data from the 2012 West Ice survey.
 
@@ -176,4 +175,3 @@ printKingsley2screen(estimates)
 # Pup production estimates based on the GAM method
 printGAM2screen(estimatesGAM)
 
-```

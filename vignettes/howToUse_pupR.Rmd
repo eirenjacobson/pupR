@@ -561,5 +561,5 @@ To conform to the procedure used in 2012, we used the following binning of the v
 
 The following binning of the various stages of the hooded seal pups was: stage 1 = Newborn and Thin, stage 2 = Fat, and stage 3 = Solitary. 
 
-## References
+# References
 <div id="refs"></div>

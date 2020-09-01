@@ -1291,8 +1291,11 @@ birthDist <- function(harpfname = NA,
          cex.axis = 1.5,
          cex.lab = 1.5)
     lines(xax,bdist,col = "blue",lwd = 4)
-    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+    lines(datePhoto*rep(1,10),seq(0,0.5,length.out = 10),
           lwd = 4,lty = 2,col = "black")
+    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+          lwd = 4,lty = 3,col = "grey")
+    legend("topright",legent = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"))
   }
 
   # With uncertainty
@@ -1312,8 +1315,11 @@ birthDist <- function(harpfname = NA,
     polygon(x = c(xax,rev(xax)),c(Bdistmin,rev(Bdistmax)),border = NA,
             col = "lightblue")
     lines(xax,bdist,col = "royalblue",lwd = 4)
-    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+    lines(datePhoto*rep(1,10),seq(0,0.5,length.out = 10),
           lwd = 4,lty = 2,col = "black")
+    lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
+          lwd = 4,lty = 3,col = "grey")
+    legend("topright",legent = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"))
   }
   #-----------------------------------------
 
@@ -1336,15 +1342,15 @@ birthDist <- function(harpfname = NA,
     points(days,staging[,1]/rowSums(staging),bg = "red",pch = 21,cex = 1.5)
     points(days,staging[,2]/rowSums(staging),bg = "blue",pch = 22,cex = 1.5)
     points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
-    lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
+    lines(datePhoto*rep(1,10),seq(0,1.1,length.out = 10),
           lwd = 2,lty = 2,col = "black")
-    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    text((datePhoto+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
     legend('right', lwd=2, col=c("red","blue","green"),lty = c(1,1,1), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
   }
 
   # With uncertainty
   if(plotCI){
-    if(grDev) graphDev(width = grWidth,height = grHight)
+    if(grDev) graphDev(width = grWidth,height = grHeight)
     par(mar=c(6,5,5,5),bg = "white")
     plot(t_tot,nn1/nn,type = "n",
          col = "red",
@@ -1375,7 +1381,7 @@ birthDist <- function(harpfname = NA,
     points(days,staging[,3]/rowSums(staging),bg = "green",pch = 24,cex = 1.5)
     lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
           lwd = 2,lty = 2,col = "black")
-    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    text((datePhoto+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
     legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
   }
 
@@ -1392,9 +1398,9 @@ birthDist <- function(harpfname = NA,
          cex.lab = 1.5,cex.main = 1.5,bty = "l")
     lines(t_tot,nn1+nn2,col = "blue",lwd = 4)
     lines(t_tot,nn1+nn2+nn3,col= "green",lwd = 4)
-    lines(mub*rep(1,10),seq(0,1.1,length.out = 10),
+    lines(datePhoto*rep(1,10),seq(0,1.1,length.out = 10),
           lwd = 2,lty = 2,col = "black")
-    text((mub+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
+    text((datePhoto+0.1),1.1,adj=c(0, -0.5), srt=0,"Photographic survey")
     legend('right', lwd=2, col=c("red","blue","green"), cex=1.0, c('Newborn/Yellow', 'Thin', 'Fat/Grey'), bty='n')
     #plot(t_tot,nn1,type = "l",col= "red",lwd = 2,xlim = c(10,40),ylim = c(0,1.5))
     #lines(t_tot,nn1+nn2,col = "green",lwd = 2)
