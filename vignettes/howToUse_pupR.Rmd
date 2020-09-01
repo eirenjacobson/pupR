@@ -500,7 +500,33 @@ printGAM2screen(estimatesGAM)
 
 ## Pup production estimation methods
 
+The photographic surveys are based on a systematic sampling design with a single random start and a sampling unit of transects of variable length. The sampled data are pup counts from aerial photos. In this section we will review the Kingsley method and the GAM method.
+
 ### The Kingsley method
+
+The estimated number of pups on the ice at the time of survey may be written as [@Salberg2008; @Øigård2010]:
+
+$$\hat{N}=T\sum_{j=1}^{J}W_jx_j$$
+where $W_j=l_j/A_j$, $A_j$ is the area covered of all photographs on transect $j$, $l_j$ is the length of transect $j$, $J$ is the total number of transects, and $x_j=\sum_{k=1}^{P_{ij}}\hat{n}_{j,k}$ is the sum of the corrected counts on transect $j$. The number of photos on the $j$th transect is $P_j$ and $T$ is the spacing between transects in the survey. This estimator takes into account changes in transect width along transects and between transects due to changes in flight altitude.
+The estimates of error variance $V^s$, based on serial differences between transects were calculated as [@Salberg2008]:
+
+$$V^s=\frac{TJ}{2(J-1)}\Biggl(T-\frac{\sum_{j=1}^{J}A_j}{\sum_{j=1}^{J}l_j}\Biggr)\sum_{j=1}^{J}l_j(W_jx_j-W_{j+1}x_{j+1})^2$$
+This estimator assumes that the mean is constant between two neighboring transects. For the seal pup data this assumption is often not valid due to clustered data, and we will have an unwanted contribution from the difference between the transect count mean values which causes an overestimate of the variance of the pup production estimate [@Cochran1977]. However, if the seals are homogenously spread over a large area this assumption is fine. 
+
+The variance associated with mis-classification of pups, i.e., readers errors, for the whole survey is then [@Salberg2008]:
+
+$$\begin{aligned} V^{meas}=T^2\Biggl[\sum_{j=1}^{J}W^2_jP_j\sigma^2+\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr)^2var(\alpha)+2cov(\alpha,\beta)\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr) \\ \Biggl(\sum_{j=1}^{J}Wj\sum_{k=1}^{P_j}n_{j,k}\Biggr)+var(\beta)\Biggl(\sum_{j=1}^{J}Wj\sum_{k=1}^{P_j}n_{j,k}\Biggr)^2\Biggr] \end{aligned}$$
+
+If the intercept term is not statistically significant on a specified level it could be dropped from the linear correction model. The variance expression is then simplified to
+
+$$V^{meas}=T^2\Biggl[\sum_{j=1}^{J}W^2_jP_j\sigma^2+\Biggl(\sum_{j=1}^{J}W_jP_j\Biggr)^2\Biggr]$$
+ 
+To obtain the total sampling variance of the survey, the variance associated with the mis-identification corrections $V^{meas}$ was added to the sampling variance $V^s$, i.e.:
+
+$$V=V^s+V^{meas}$$
+
+
+
 
 ### The GAM method
 

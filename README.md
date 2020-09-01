@@ -20,7 +20,7 @@ The most recent version of `pupR` is hosted on a git repository at
 
 To install the R-package directly from the repository use the following command (note: the R-package devtools has to be installed first)
 ``` r
-devtools::install_github("https://github.com/NorskRegnesentral/pupR.git", build_vignettes = FALSE)
+devtools::install_github("https://github.com/NorskRegnesentral/pupR.git", build_vignettes = TRUE)
 ``` 
 
 In order to load the package type:
