@@ -1295,7 +1295,7 @@ birthDist <- function(harpfname = NA,
           lwd = 4,lty = 2,col = "black")
     lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
           lwd = 4,lty = 3,col = "grey")
-    legend("topright",legent = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"))
+    legend("topright",legend = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"),bty = "n")
   }
 
   # With uncertainty
@@ -1319,7 +1319,7 @@ birthDist <- function(harpfname = NA,
           lwd = 4,lty = 2,col = "black")
     lines(mub*rep(1,10),seq(0,0.5,length.out = 10),
           lwd = 4,lty = 3,col = "grey")
-    legend("topright",legent = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"))
+    legend("topright",legend = c("Date of aerial photo","Estimated mean of birth distribution"),lwd = c(4,4),lty = c(2,3),col = c("black","grey"),bty = "n")
   }
   #-----------------------------------------
 

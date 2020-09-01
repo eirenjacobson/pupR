@@ -6,8 +6,8 @@ output:
   rmarkdown::html_vignette:
     toc: true
     number_sections: true
-    bibliography: 'library.bib'
-csl: 'ices-journal-of-marine-science.csl'
+    bibliography: 'C:\Users\oigard\Work\HI\pupR\vignettes\library.bib'
+csl: 'C:\Users\oigard\Work\HI\pupR\vignettes\ices-journal-of-marine-science.csl'
 vignette: >
     %\VignetteIndexEntry{How to use the `pupR` package}
     %\VignetteEngine{knitr::rmarkdown}
