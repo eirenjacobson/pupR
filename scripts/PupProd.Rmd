@@ -17,7 +17,7 @@ output:
 ##  pdf_document:
 ##    latex_engine: xelatex
 always_allow_html: yes
-bibliography: 'C:/Users/a5406/Documents/Articles/library.bib'
+bibliography: 'library.bib'
 csl: 'ices-journal-of-marine-science.csl'
 ##biblio-style: apalike
 ##biblio-style: harvard

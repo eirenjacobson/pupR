@@ -6,8 +6,8 @@ output:
   rmarkdown::html_vignette:
     toc: true
     number_sections: true
-    bibliography: 'C:\Users\oigard\Work\HI\pupR\vignettes\library.bib'
-csl: 'C:\Users\oigard\Work\HI\pupR\vignettes\ices-journal-of-marine-science.csl'
+    bibliography: 'library.bib'
+    csl: 'ices-journal-of-marine-science.csl'
 vignette: >
     %\VignetteIndexEntry{How to use the `pupR` package}
     %\VignetteEngine{knitr::rmarkdown}
@@ -61,8 +61,8 @@ The demo data is from a survey carried out in the West Ice in 2012. When loading
 names(demoData)
 ```
 
-## Full data set
-The latest version of the most recent data on aerial photos of the harps and hooded seal population in the West Ice has a separate GitHub repository called [HarpAndHoodedAerialSealData](https://www.github.com/NorskRegnesentral/HarpAndHoodedAerialSealData).
+<!-- ## Full data set -->
+<!-- The latest version of the most recent data on aerial photos of the harps and hooded seal population in the West Ice has a separate GitHub repository called [HarpAndHoodedAerialSealData](https://www.github.com/NorskRegnesentral/HarpAndHoodedAerialSealData). -->
 
 <!-- To download the complete data set run the following function: -->
 <!-- ```{r eval=FALSE} -->
@@ -529,8 +529,23 @@ $$V=V^s+V^{meas}$$
 
 
 ### The GAM method
+In the survey analysis developed in Salberg et al. (2009) the data was analyzed using spatial modeling methods based on Generalized Additive Models. Even thought we are dealing with count data, a Poisson error distribution would not be appropriate because the seal count data are over-dispersed. Overdispersed data are often a consequence of the population being clustered (McCullagh and Nelder, 1989). We therefore  assume  that  the  data  are  negative  binomial distributed,  which  has  been  applied  previous  to  model over-dispersed count data (Thurston et al., 2000; Hinde and  Demétrio,  1998;  Gardner et  al.,  1995; Augustin et al., 1998).
+
+The  counted  number  of  pups  in  the $k$th  photograph is 
+
+where $A_k$ is the area covered by the $k$th photograph, and   $d_k$  is  the  density  of  pups  in  photograph $k$.  We  assume that $n_k$  is  negative  binomial  distributed  with  mean $\mu_k$, and  shape  parameter $\kappa$.  The  purpose  of  the  GAM  is  to model  the  pup  density  over  the  patch  as  a  function  of spatial  location ${\bf x}  =  [x_1, x_2]$.  Using  the  logarithmic  link function $g(\mu_k) = \eta_k = \log(\mu_k)$, the pup density is modeled as
+
+where $\log(A_k)$ is an offset variable, and $S(\cdot)$ is a smoothing function of the spatial covariates, and ${\bf x}_k$ is the spatial location at the $k$th sampling point. Note that the estimated expected seal density is then
+
+The smoothing function $S({\bf x})$ is modeled using a thin plate regression spline, and the degree of smoothness is determined  using  generalized  cross  validation  (Wood, 2003). Once the model has been chosen, we may predict the seal density at any location in the patch. Hence, the GAM provides us with a smoothed expected seal density surface over the entire survey area. To estimate the total pup production in the patch, we numerically integrate the expected seal density over space (Augustin et al., 1998; Borchers et al., 1997; Salberg et al., 2009)
+
+where $\hat{N}_{GAM}^j$  is  the  estimated  number  of  pups  in  the $j$th fine grid are at spatial location ${\bf x}_j$. The  method  used  to  calculate  the  variance  of  the pup production follows exactly the procedures described in detail in Salberg et al. (2009), and has the following compact form
+
+where ${\bf\mu}_g$ is a vector collecting all fine grid pup density estimates, ${\bf X}_g$  is  the  matrix  that  linearly  maps  the  estimated parameter vector $\beta$ to the smoothed expected seal density surface. We refer to the original manuscript for a detailed explanation of the various quantities (Salberg et al., 2009).
 
 ### The point process method
+
+
 ## Estimating the birth distribution
 
 This was done by using information on the proportion of pups in seven distinct age-dependent stages. These easily recognizable descriptive age categories were based on pelage colour and body condition, overall appearance, and muscular coordination, as described for the northwest Atlantic harp seals by [@Stewart1980]:
