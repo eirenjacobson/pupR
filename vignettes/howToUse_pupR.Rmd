@@ -182,7 +182,7 @@ VarHoodedCorr = EstHoodedCorr$SE^2+correctedList$VmeasHooded
 
 ## GAM based pup abundance
 
-In this section we present a method based on Generalized Additive Models (GAMs) to estimate the pup density over the whelping patch. From this we obtain both an estimate and a uncertainty of the pup abundance. For details of the GAM method see (ref).
+In this section we present a method based on Generalized Additive Models (GAMs) to estimate the pup density over the whelping patch. From this we obtain both an estimate and a uncertainty of the pup abundance. For details of the GAM method see the Appendix.
 
 To estimate the pup abundance using GAMs we use the `GAMestimate` function. As we did for the Kingsley method we estimate the pup abundance using both the uncorrected and the corrected pup counts. We can also specify for wich population to estimate the pup abundance, or both. In the example below we estimate the pup abundance for both populations.
 
@@ -532,18 +532,18 @@ $$V=V^s+V^{meas}$$
 In the survey analysis developed in Salberg et al. (2009) the data was analyzed using spatial modeling methods based on Generalized Additive Models. Even thought we are dealing with count data, a Poisson error distribution would not be appropriate because the seal count data are over-dispersed. Overdispersed data are often a consequence of the population being clustered (McCullagh and Nelder, 1989). We therefore  assume  that  the  data  are  negative  binomial distributed,  which  has  been  applied  previous  to  model over-dispersed count data (Thurston et al., 2000; Hinde and  Demétrio,  1998;  Gardner et  al.,  1995; Augustin et al., 1998).
 
 The  counted  number  of  pups  in  the $k$th  photograph is 
-
+$$n_k = A_kd_k$$
 where $A_k$ is the area covered by the $k$th photograph, and   $d_k$  is  the  density  of  pups  in  photograph $k$.  We  assume that $n_k$  is  negative  binomial  distributed  with  mean $\mu_k$, and  shape  parameter $\kappa$.  The  purpose  of  the  GAM  is  to model  the  pup  density  over  the  patch  as  a  function  of spatial  location ${\bf x}  =  [x_1, x_2]$.  Using  the  logarithmic  link function $g(\mu_k) = \eta_k = \log(\mu_k)$, the pup density is modeled as
-
+$$\mu_k=e^{\eta_k}=\exp\left[\log\left(A_k\right)+S\left(x_k\right)\right],$$
 where $\log(A_k)$ is an offset variable, and $S(\cdot)$ is a smoothing function of the spatial covariates, and ${\bf x}_k$ is the spatial location at the $k$th sampling point. Note that the estimated expected seal density is then
-
+$$d_k=\exp\left(S\left(x_k\right)\right].$$
 The smoothing function $S({\bf x})$ is modeled using a thin plate regression spline, and the degree of smoothness is determined  using  generalized  cross  validation  (Wood, 2003). Once the model has been chosen, we may predict the seal density at any location in the patch. Hence, the GAM provides us with a smoothed expected seal density surface over the entire survey area. To estimate the total pup production in the patch, we numerically integrate the expected seal density over space (Augustin et al., 1998; Borchers et al., 1997; Salberg et al., 2009)
-
-where $\hat{N}_{GAM}^j$  is  the  estimated  number  of  pups  in  the $j$th fine grid are at spatial location ${\bf x}_j$. The  method  used  to  calculate  the  variance  of  the pup production follows exactly the procedures described in detail in Salberg et al. (2009), and has the following compact form
-
+$$\hat{N}_{GAM}=\sum_{\text{fine grid } j}\hat{N}_{GAM}^j$$
+where $\hat{N}_{GAM}^j$  is  the  estimated  number  of  pups  in  the $j$th fine grid are at spatial location $x_j$. The  method  used  to  calculate  the  variance  of  the pup production follows exactly the procedures described in detail in Salberg et al. (2009), and has the following compact form
+$$V_i^{GAM}=\mu^T_gX_g\text{cov}(\beta)X_g^T\mu_g,$$
 where ${\bf\mu}_g$ is a vector collecting all fine grid pup density estimates, ${\bf X}_g$  is  the  matrix  that  linearly  maps  the  estimated parameter vector $\beta$ to the smoothed expected seal density surface. We refer to the original manuscript for a detailed explanation of the various quantities (Salberg et al., 2009).
 
-### The point process method
+
 
 
 ## Estimating the birth distribution
