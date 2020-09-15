@@ -1157,7 +1157,6 @@ birthDist <- function(harpfname = NA,
   if(Sys.info()["sysname"] =="Windows")dyn.load(paste(tmbDir,"/x64/pupR",sep = ""))
   if(Sys.info()["sysname"] =="Linux")dyn.load(paste(tmbDir,"/pupR.so",sep = ""))
   if(Sys.info()["sysname"] =="Darwin")dyn.load(paste(tmbDir,"/pupR.so",sep = ""))
-
   #-----------------------------------
 
 
@@ -1510,4 +1509,3 @@ propFitFun <- function(mub = NA,
   return(returnList)
 
 }
-
