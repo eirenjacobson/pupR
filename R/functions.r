@@ -1156,6 +1156,7 @@ birthDist <- function(harpfname = NA,
   tmbDir <- system.file("libs", package = "pupR")
   if(Sys.info()["sysname"] =="Windows")dyn.load(paste(tmbDir,"/x64/pupR",sep = ""))
   if(Sys.info()["sysname"] =="Linux")dyn.load(paste(tmbDir,"/pupR.so",sep = ""))
+  if(Sys.info()["sysname"] =="Darwin")dyn.load(paste(tmbDir,"/pupR.so",sep = ""))
   #-----------------------------------
 
 
